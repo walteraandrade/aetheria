@@ -71,7 +71,6 @@
         enemyHealth = 100;
         message = "The battle begins!";
         
-        // Only include Major Third and Perfect Fifth for the main battle
         const initialSpells: SpellName[] = ['Major Third', 'Perfect Fifth'];
         choices = initialSpells.sort(() => 0.5 - Math.random());
 
@@ -97,7 +96,6 @@
             tutorialPhase = 'reward';
         } else if (playerHealth <= 0) {
             message = "You have been defeated... The world remains in dissonance.";
-            // Optionally transition to a game over state or restart tutorial
         } else if (tutorialCombatIndex >= tutorialCombatSequence.length) {
             tutorialPhase = 'reward';
         } else {
