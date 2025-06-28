@@ -1,6 +1,7 @@
 <script lang="ts">
     import { playMelodicInterval, type Note, playGreatHarmonyTheme } from './lib/sound.engine';
     import * as Tone from 'tone';
+    import { Frequency } from 'tone';
 
     interface Spell {
         name: string;
@@ -79,8 +80,8 @@
     }
 
     function getIntervalType(note1: Note, note2: Note): 'higher' | 'lower' | 'equal' {
-        const freq1 = Tone.Frequency(note1).toHz();
-        const freq2 = Tone.Frequency(note2).toHz();
+        const freq1 = Frequency(note1).toFrequency();
+        const freq2 = Frequency(note2).toFrequency();
 
         if (freq2 > freq1) {
             return 'higher';
@@ -95,14 +96,23 @@
         const currentAttack = tutorialCombatSequence[tutorialCombatIndex];
         if (!currentAttack) return;
 
-        const expectedAction = getIntervalType(currentAttack.notes[0], currentAttack.notes[1]);
+        const expectedIntervalType = getIntervalType(currentAttack.notes[0], currentAttack.notes[1]);
 
-        if (action === expectedAction) {
+        let mappedAction: 'higher' | 'lower' | 'equal';
+        if (action === 'Bend') {
+            mappedAction = 'higher';
+        } else if (action === 'Jump') {
+            mappedAction = 'lower';
+        } else {
+            mappedAction = 'equal';
+        }
+
+        if (mappedAction === expectedIntervalType) {
             enemyHealth -= 34;
             message = `Correct! You chose ${action} and deal 34 damage!`;
         } else {
             playerHealth -= 25;
-            message = `Wrong! It was a ${currentAttack.correctAction}. You take 25 damage!`;
+            message = `Wrong! It was a ${currentAnswer}. You take 25 damage!`;
         }
 
         tutorialCombatIndex++;
@@ -365,6 +375,7 @@
     
     .character-pane:last-child .health-fill {
         background-color: var(--enemy-health);
+        height: 30px;
     }
     
     .message-log {
