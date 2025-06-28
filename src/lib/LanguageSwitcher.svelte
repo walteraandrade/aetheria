@@ -1,0 +1,8 @@
+<script lang="ts">
+  import { locale } from 'svelte-i18n';
+</script>
+
+<select bind:value={$locale}>
+  <option value="en">English</option>
+  <option value="pt">Português</option>
+</select>

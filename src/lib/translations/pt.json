@@ -1,0 +1,45 @@
+{
+  "app": {
+    "title": "Aetheria: A Jornada do Feiticeiro do Som"
+  },
+  "tutorial": {
+    "mentor_greeting": "Preste atenção, Eco! A dissonância da besta não é aleatória.",
+    "action_bend": "Agachar",
+    "action_jump": "Pular",
+    "action_brace": "Firmar",
+    "intro_message_0": "No alvorecer do tempo, toda a realidade foi tecida a partir de uma única sinfonia — a Grande Harmonia.",
+    "intro_message_1": "Mas essa música desvaneceu, corrompida pelo silêncio rastejante da Kakofonia.",
+    "intro_message_2": "A canção do mundo tornou-se um zumbido sem sentido. No entanto, você é diferente. Você é um Eco, nascido com a maldição e o dom de ouvir as melodias fracas e fantasmagóricas do que foi perdido.",
+    "intro_message_3": "Assombrado por esses sons fantasma, sua busca por respostas o trouxe até aqui, à base da lendária Torre do Vibrato, o último santuário da verdadeira música.",
+    "intro_message_4": "Você procura seu guardião, Maestro Bethovan, o último mestre que se lembra do verdadeiro som da Trama.",
+    "intro_message_5": "Ao se aproximar, uma voz, poderosa e nítida como o toque de um trompete, ecoa do topo da torre...",
+    "intro_message_6": "Outro Eco desgarrado, atraído pela chama? A Harmonia não é um brinquedo! Se a mais simples dissonância dessa criatura o oprime, você não é digno dos meus ensinamentos. Prove que você consegue distinguir o alto do baixo!",
+    "learning_pitch_0": "Preste atenção, Eco! A dissonância da besta não é aleatória. Ela ataca alto ou baixo. Você deve aprender a sentir a diferença.",
+    "learning_pitch_1": "Primeiro, o Ataque Alto. Quando seu grito aumenta de tom, ele mira em sua cabeça! Você deve AGACHAR para se esquivar. Assim!",
+    "learning_pitch_2": "Bom. Agora, o Ataque Baixo. Quando seu rosnado diminui de tom, ele ataca seu âmago! Você deve PULAR sobre ele. Observe!",
+    "learning_pitch_3": "Finalmente, o mais perigoso de todos. Se seu foco não muda de tom, ele está reunindo poder para um ataque direto! Você deve manter sua posição e FIRMAR para o impacto!",
+    "learning_pitch_4": "A lição acabou. Agora, enfrente a criatura. Não me decepcione.",
+    "reward_message_0": "Hmph. Nada mal. Você tem um senso básico de tom...",
+    "reward_message_1": "Você aprendeu: Golpe de Terça Maior!",
+    "reward_message_2": "Você aprendeu: Escudo de Quinta Perfeita!",
+    "reward_message_3": "Agora o verdadeiro treinamento começa. Prepare-se para sua primeira batalha de verdade."
+  },
+  "battle": {
+    "start_message": "Um Diabrete Estridente selvagem aparece! Prepare-se para a batalha.",
+    "start_button_try_again": "Tentar Novamente",
+    "start_button_start_quest": "Começar Sua Jornada",
+    "battle_begins": "A batalha começa!",
+    "enemy_attack_message": "O Diabrete Estridente solta um som dissonante...",
+    "correct_action": "Correto! Você escolheu {action} e causou 34 de dano!",
+    "wrong_action": "Errado! Era um {expectedAction}. Você sofreu 25 de dano!",
+    "enemy_defeated": "Você derrotou o Diabrete Estridente! Vitória!",
+    "player_defeated": "Você foi derrotado... O mundo permanece em dissonância.",
+    "dissonant_beast_plays": "A Besta Dissonante toca um intervalo {type}.",
+    "cast_spell": "Conjurar \"{choice}\""
+  },
+  "character_names": {
+    "player": "Feiticeiro do Som",
+    "enemy_imp": "Diabrete Estridente",
+    "enemy_beast": "Besta Dissonante"
+  }
+}

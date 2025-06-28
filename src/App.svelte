@@ -1,7 +1,12 @@
 <script lang="ts">
+    import './lib/i18n'; // Run the i18n setup
+    
+    import { t } from 'svelte-i18n'; // Import the translation function
+    import { i18nInit } from './lib/i18n';
     import { playMelodicInterval, type Note, playGreatHarmonyTheme } from './lib/sound.engine';
     import * as Tone from 'tone';
     import { Frequency } from 'tone';
+    import LanguageSwitcher from './lib/LanguageSwitcher.svelte';
 
     interface Spell {
         name: string;
@@ -16,7 +21,8 @@
 
     let playerHealth: number = 100;
     let enemyHealth: number = 100;
-    let message: string = "A wild Shrieking Imp appears! Prepare for battle.";
+    let message: string;
+    $: message = $t('battle.start_message');
     let choices: SpellName[] = [];
     let currentAnswer: SpellName | null = null;
     let isBattling: boolean = false;
@@ -29,20 +35,20 @@
     let learningPitchStep: number = 0;
 
     const tutorialIntroMessages: string[] = [
-        "In the dawn of time, all of reality was woven from a single symphony—the Great Harmony.",
-        "But this music has faded, corrupted by the creeping silence of the Kakophony.",
-        "The world's song has become a meaningless drone. Yet you are different. You are an Echo, born with the curse and gift of hearing the faint, ghostly melodies of what was lost.",
-        "Haunted by these phantom sounds, your search for answers has led you here, to the base of the legendary Tower of Vibrato, the last sanctuary of true music.",
-        "You seek its guardian, Maestro Bethovan, the last master who remembers the true sound of the Weave.",
-        "As you approach, a voice, powerful and sharp as a trumpet's blast, echoes from the tower's peak...",
-        "Another stray Echo, drawn to the flame? The Harmony is not a toy! If the simplest dissonance of that creature overwhelms you, you are not worthy of my teachings. Prove you can even tell up from down!"
+        $t('tutorial.intro_message_0'),
+        $t('tutorial.intro_message_1'),
+        $t('tutorial.intro_message_2'),
+        $t('tutorial.intro_message_3'),
+        $t('tutorial.intro_message_4'),
+        $t('tutorial.intro_message_5'),
+        $t('tutorial.intro_message_6')
     ];
 
     const tutorialRewardMessages: string[] = [
-        "Hmph. Not bad. You have a basic sense of pitch...",
-        "You have learned: Major Third Strike!",
-        "You have learned: Perfect Fifth Shield!",
-        "Now the real training begins. Prepare for your first true battle."
+        $t('tutorial.reward_message_0'),
+        $t('tutorial.reward_message_1'),
+        $t('tutorial.reward_message_2'),
+        $t('tutorial.reward_message_3')
     ];
 
     interface TutorialAttack {
@@ -71,7 +77,7 @@
         isBattling = true;
         playerHealth = 100;
         enemyHealth = 100;
-        message = "The battle begins!";
+        message = $t('battle.battle_begins');
         
         const initialSpells: SpellName[] = ['Major Third', 'Perfect Fifth'];
         choices = initialSpells.sort(() => 0.5 - Math.random());
@@ -109,7 +115,7 @@
 
         if (mappedAction === expectedIntervalType) {
             enemyHealth -= 34;
-            message = `Correct! You chose ${action} and deal 34 damage!`;
+            message = $t('battle.correct_action', { values: { action } });
         } else {
             playerHealth -= 25;
             message = `Wrong! It was a ${currentAnswer}. You take 25 damage!`;
@@ -118,10 +124,10 @@
         tutorialCombatIndex++;
 
         if (enemyHealth <= 0) {
-            message = "You have defeated the Dissonant Beast! Victory!";
+            message = $t('battle.enemy_defeated');
             tutorialPhase = 'reward';
         } else if (playerHealth <= 0) {
-            message = "You have been defeated... The world remains in dissonance.";
+            message = $t('battle.player_defeated');
         } else if (tutorialCombatIndex >= tutorialCombatSequence.length) {
             tutorialPhase = 'reward';
         } else {
@@ -135,7 +141,7 @@
         const currentAttack = tutorialCombatSequence[tutorialCombatIndex];
         if (currentAttack) {
             playMelodicInterval(currentAttack.notes[0], currentAttack.notes[1]);
-            message = `The Dissonant Beast plays a ${currentAttack.type} interval.`;
+            message = $t('battle.dissonant_beast_plays', { values: { type: currentAttack.type } });
         }
     }
 
@@ -143,7 +149,7 @@
         if (turnInProgress) return;
         turnInProgress = true;
 
-        message = "The Imp shrieks a dissonant sound...";
+        message = $t('battle.enemy_attack_message');
         
         const availableSpells = Object.keys(spellbook) as SpellName[];
         const randomSpellName = availableSpells[Math.floor(Math.random() * availableSpells.length)];
@@ -197,7 +203,7 @@
             message = "You have defeated the Shrieking Imp! Victory!";
             isBattling = false;
         } else if (playerHealth <= 0) {
-            message = "You have been defeated... The world remains in dissonance.";
+            message = $t('battle.player_defeated');
             isBattling = false;
         } else {
             setTimeout(() => {
@@ -209,112 +215,121 @@
 </script>
 
 <main>
-    <h1>Aetheria: The Sound-Sorcerer's Quest</h1>
+    {#await i18nInit}
+        <LanguageSwitcher />
+        <h1>{$t('app.title')}</h1>
 
-    {#if gameState === 'tutorial'}
-        {#if tutorialPhase === 'intro'}
-            <div class="message-log">{tutorialIntroMessages[tutorialMessageIndex]}</div>
-            <button class="start-button" on:click={advanceTutorial}>
-                Next
-            </button>
-        {:else if tutorialPhase === 'learningPitch'}
-            {#if learningPitchStep === 0}
-                <div class="message-log">
-                    <p>Maestro Bethovan: Pay attention, Echo! The beast's dissonance is not random. It strikes high or low. You must learn to feel the difference.</p>
-                </div>
-                <button class="start-button" on:click={() => { learningPitchStep = 1; }}>Next</button>
-            {:else if learningPitchStep === 1}
-                <div class="message-log">
-                    <p>Maestro Bethovan: First, the High Attack. When its shriek rises in pitch, it aims for your head! You must BEND beneath it. Like this!</p>
-                </div>
-                <button on:click={() => { playMelodicInterval('C4', 'G4'); }}>Play High Attack</button>
-                <button on:click={() => { learningPitchStep = 2; }}>Bend</button>
-            {:else if learningPitchStep === 2}
-                <div class="message-log">
-                    <p>Maestro Bethovan: Good. Now, the Low Attack. When its growl falls in pitch, it strikes at your core! You must JUMP over it. Observe!</p>
-                </div>
-                <button on:click={() => { playMelodicInterval('G4', 'C4'); }}>Play Low Attack</button>
-                <button on:click={() => { learningPitchStep = 3; }}>Jump</button>
-            {:else if learningPitchStep === 3}
-                <div class="message-log">
-                    <p>Maestro Bethovan: Finally, the most dangerous of all. If its focus does not change pitch, it is gathering power for a direct blast! You must BRACE for the impact!</p>
-                </div>
-                <button on:click={() => { playMelodicInterval('E4', 'E4'); }}>Play Brace Attack</button>
-                <button on:click={() => { learningPitchStep = 4; }}>Brace</button>
-            {:else if learningPitchStep === 4}
-                <div class="message-log">
-                    <p>Maestro Bethovan: The lesson is over. Now, face the creature. Do not fail me.</p>
-                </div>
-                <button class="start-button" on:click={() => { tutorialPhase = 'combat'; playNextTutorialAttack(); }}>Next</button>
-            {/if}
-        {:else if tutorialPhase === 'combat' || tutorialPhase === 'climax'}
-            <div class="battle-scene">
-                <div class="character-pane">
-                    <h2>Sound-Sorcerer</h2>
-                    <div class="health-bar">
-                        <div class="health-fill" style="width: {playerHealth}%;"></div>
-                        <span>{playerHealth} / 100 HP</span>
-                    </div>
-                </div>
-                <div class="character-pane">
-                    <h2>Dissonant Beast</h2>
-                    <div class="health-fill" style="width: {enemyHealth}%;"></div>
-                    <span>{enemyHealth} / 100 HP</span>
-                </div>
-            </div>
-
-            <div class="message-log">{message}</div>
-
-            <div class="spellbook">
-                <button on:click={() => handleTutorialAction('Bend')}>Bend</button>
-                <button on:click={() => handleTutorialAction('Jump')}>Jump</button>
-                {#if tutorialCombatSequence[tutorialCombatIndex] && getIntervalType(tutorialCombatSequence[tutorialCombatIndex].notes[0], tutorialCombatSequence[tutorialCombatIndex].notes[1]) === 'equal'}
-                    <button on:click={() => handleTutorialAction('Brace')}>Brace</button>
-                {/if}
-            </div>
-        {:else if tutorialPhase === 'reward'}
-            <div class="message-log">{tutorialRewardMessages[tutorialMessageIndex]}</div>
-            <button class="start-button" on:click={advanceTutorial}>
-                Next
-            </button>
-        {/if}
-    {:else if gameState === 'battle'}
-        {#if !isBattling}
-            <div class="message-log">{message}</div>
-            <button class="start-button" on:click={startBattle}>
-                {playerHealth <= 0 ? 'Try Again' : 'Start Your Quest'}
-            </button>
-        {:else}
-            <div class="battle-scene">
-                <div class="character-pane">
-                    <h2>Sound-Sorcerer</h2>
-                    <div class="health-bar">
-                        <div class="health-fill" style="width: {playerHealth}%;"></div>
-                        <span>{playerHealth} / 100 HP</span>
-                    </div>
-                </div>
-                <div class="character-pane">
-                    <h2>Shrieking Imp</h2>
-                    <div class="health-bar">
-                        <div class="health-fill" style="width: {enemyHealth}%;"></div>
-                        <span>{enemyHealth} / 100 HP</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="message-log">{message}</div>
-
-            <div class="spellbook">
-                {#each choices as choice}
-                    <button on:click={() => handlePlayerChoice(choice)}>
-                        Cast "{choice}"
+            {#if gameState === 'tutorial'}
+                {#if tutorialPhase === 'intro'}
+                    <div class="message-log">{tutorialIntroMessages[tutorialMessageIndex]}</div>
+                    <button class="start-button" on:click={advanceTutorial}>
+                        Next
                     </button>
-                {/each}
-            </div>
+                {:else if tutorialPhase === 'learningPitch'}
+                    {#if learningPitchStep === 0}
+                        <div class="message-log">
+                            <p>{$t('tutorial.learning_pitch_0')}</p>
+                        </div>
+                        <button class="start-button" on:click={() => { learningPitchStep = 1; }}>Next</button>
+                    {:else if learningPitchStep === 1}
+                        <div class="message-log">
+                            <p>{$t('tutorial.learning_pitch_1')}</p>
+                        </div>
+                        <button on:click={() => { playMelodicInterval('C4', 'G4'); }}>Play High Attack</button>
+                        <button on:click={() => { learningPitchStep = 2; }}>{$t('tutorial.action_bend')}</button>
+                    {:else if learningPitchStep === 2}
+                        <div class="message-log">
+                            <p>{$t('tutorial.learning_pitch_2')}</p>
+                        </div>
+                        <button on:click={() => { playMelodicInterval('G4', 'C4'); }}>Play Low Attack</button>
+                        <button on:click={() => { learningPitchStep = 3; }}>{$t('tutorial.action_jump')}</button>
+                    {:else if learningPitchStep === 3}
+                        <div class="message-log">
+                            <p>{$t('tutorial.learning_pitch_3')}</p>
+                        </div>
+                        <button on:click={() => { playMelodicInterval('E4', 'E4'); }}>Play Brace Attack</button>
+                        <button on:click={() => { learningPitchStep = 4; }}>{$t('tutorial.action_brace')}</button>
+                    {:else if learningPitchStep === 4}
+                        <div class="message-log">
+                            <p>{$t('tutorial.learning_pitch_4')}</p>
+                        </div>
+                        <button class="start-button" on:click={() => { tutorialPhase = 'combat'; playNextTutorialAttack(); }}>Next</button>
+                    {/if}
+                {:else if tutorialPhase === 'combat' || tutorialPhase === 'climax'}
+                    <div class="battle-scene">
+                        <div class="character-pane">
+                            <h2>{$t('character_names.player')}</h2>
+                            <div class="health-bar">
+                                <div class="health-fill" style="width: {playerHealth}%;"></div>
+                                <span>{playerHealth} / 100 HP</span>
+                            </div>
+                        </div>
+                        <div class="character-pane">
+                            <h2>{$t('character_names.enemy_beast')}</h2>
+                            <div class="health-bar">
+                                <div class="health-fill" style="width: {enemyHealth}%;"></div>
+                                <span>{enemyHealth} / 100 HP</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="message-log">{message}</div>
+
+                    <div class="spellbook">
+                        <button on:click={() => handleTutorialAction('Bend')}>{$t('tutorial.action_bend')}</button>
+                        <button on:click={() => handleTutorialAction('Jump')}>{$t('tutorial.action_jump')}</button>
+                        {#if tutorialCombatSequence[tutorialCombatIndex] && getIntervalType(tutorialCombatSequence[tutorialCombatIndex].notes[0], tutorialCombatSequence[tutorialCombatIndex].notes[1]) === 'equal'}
+                            <button on:click={() => handleTutorialAction('Brace')}>{$t('tutorial.action_brace')}</button>
+                        {/if}
+                    </div>
+                {:else if tutorialPhase === 'reward'}
+                    <div class="message-log">{tutorialRewardMessages[tutorialMessageIndex]}</div>
+                    <button class="start-button" on:click={advanceTutorial}>
+                        Next
+                    </button>
+                {/if}
+            {:else if gameState === 'battle'}
+                {#if !isBattling}
+                    <div class="message-log">{message}</div>
+                    <button class="start-button" on:click={startBattle}>
+                        {playerHealth <= 0 ? $t('battle.start_button_try_again') : $t('battle.start_button_start_quest')}
+                    </button>
+                {:else}
+                    <div class="battle-scene">
+                        <div class="character-pane">
+                            <h2>{$t('character_names.player')}</h2>
+                            <div class="health-bar">
+                                <div class="health-fill" style="width: {playerHealth}%;"></div>
+                                <span>{playerHealth} / 100 HP</span>
+                            </div>
+                        </div>
+                        <div class="character-pane">
+                            <h2>{$t('character_names.enemy_imp')}</h2>
+                            <div class="health-bar">
+                                <div class="health-fill" style="width: {enemyHealth}%;"></div>
+                                <span>{enemyHealth} / 100 HP</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="message-log">{message}</div>
+
+                    <div class="spellbook">
+                        {#each choices as choice}
+                            <button on:click={() => handlePlayerChoice(choice)}>
+                                {$t('battle.cast_spell', { values: { choice } })}
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
+            {:else if gameState === 'map'}
+                <h1>World Map</h1>
+            {/if}
+        {:else}
+            <!-- Loading state or error message if i18n is not ready -->
+            <p>Loading translations...</p>
         {/if}
-    {:else if gameState === 'map'}
-        <h1>World Map</h1>
-    {/if}
+    {/await}
 </main>
 
 <style>

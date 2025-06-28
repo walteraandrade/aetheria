@@ -1,0 +1,45 @@
+{
+  "app": {
+    "title": "Aetheria: The Sound-Sorcerer's Quest"
+  },
+  "tutorial": {
+    "mentor_greeting": "Pay attention, Echo! The beast's dissonance is not random.",
+    "action_bend": "Bend",
+    "action_jump": "Jump",
+    "action_brace": "Brace",
+    "intro_message_0": "In the dawn of time, all of reality was woven from a single symphony—the Great Harmony.",
+    "intro_message_1": "But this music has faded, corrupted by the creeping silence of the Kakophony.",
+    "intro_message_2": "The world's song has become a meaningless drone. Yet you are different. You are an Echo, born with the curse and gift of hearing the faint, ghostly melodies of what was lost.",
+    "intro_message_3": "Haunted by these phantom sounds, your search for answers has led you here, to the base of the legendary Tower of Vibrato, the last sanctuary of true music.",
+    "intro_message_4": "You seek its guardian, Maestro Bethovan, the last master who remembers the true sound of the Weave.",
+    "intro_message_5": "As you approach, a voice, powerful and sharp as a trumpet's blast, echoes from the tower's peak...",
+    "intro_message_6": "Another stray Echo, drawn to the flame? The Harmony is not a toy! If the simplest dissonance of that creature overwhelms you, you are not worthy of my teachings. Prove you can even tell up from down!",
+    "learning_pitch_0": "Pay attention, Echo! The beast's dissonance is not random. It strikes high or low. You must learn to feel the difference.",
+    "learning_pitch_1": "First, the High Attack. When its shriek rises in pitch, it aims for your head! You must BEND beneath it. Like this!",
+    "learning_pitch_2": "Good. Now, the Low Attack. When its growl falls in pitch, it strikes at your core! You must JUMP over it. Observe!",
+    "learning_pitch_3": "Finally, the most dangerous of all. If its focus does not change pitch, it is gathering power for a direct blast! You must BRACE for the impact!",
+    "learning_pitch_4": "The lesson is over. Now, face the creature. Do not fail me.",
+    "reward_message_0": "Hmph. Not bad. You have a basic sense of pitch...",
+    "reward_message_1": "You have learned: Major Third Strike!",
+    "reward_message_2": "You have learned: Perfect Fifth Shield!",
+    "reward_message_3": "Now the real training begins. Prepare for your first true battle."
+  },
+  "battle": {
+    "start_message": "A wild Shrieking Imp appears! Prepare for battle.",
+    "start_button_try_again": "Try Again",
+    "start_button_start_quest": "Start Your Quest",
+    "battle_begins": "The battle begins!",
+    "enemy_attack_message": "The Imp shrieks a dissonant sound...",
+    "correct_action": "Correct! You chose {action} and deal 34 damage!",
+    "wrong_action": "Wrong! It was a {expectedAction}. You take 25 damage!",
+    "enemy_defeated": "You have defeated the Shrieking Imp! Victory!",
+    "player_defeated": "You have been defeated... The world remains in dissonance.",
+    "dissonant_beast_plays": "The Dissonant Beast plays a {type} interval.",
+    "cast_spell": "Cast \"{choice}\""
+  },
+  "character_names": {
+    "player": "Sound-Sorcerer",
+    "enemy_imp": "Shrieking Imp",
+    "enemy_beast": "Dissonant Beast"
+  }
+}
