@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { playMelodicInterval, type Note } from './lib/sound.engine';
+    import { playMelodicInterval, type Note, playGreatHarmonyTheme } from './lib/sound.engine';
     import * as Tone from 'tone';
+    import { Frequency } from 'tone';
 
     interface Spell {
         name: string;
@@ -28,11 +29,13 @@
     let learningPitchStep: number = 0;
 
     const tutorialIntroMessages: string[] = [
-        "The world of Aetheria has fallen silent...",
-        "You are a Sound-Sorcerer...",
-        "You find his tower, but a dissonant beast...",
-        "From inside, a voice like a thunderous rock god screams...",
-        "So, you want to learn the Harmonic Arts? ... DEFEAT IT!"
+        "In the dawn of time, all of reality was woven from a single symphony—the Great Harmony.",
+        "But this music has faded, corrupted by the creeping silence of the Kakophony.",
+        "The world's song has become a meaningless drone. Yet you are different. You are an Echo, born with the curse and gift of hearing the faint, ghostly melodies of what was lost.",
+        "Haunted by these phantom sounds, your search for answers has led you here, to the base of the legendary Tower of Vibrato, the last sanctuary of true music.",
+        "You seek its guardian, Maestro Bethovan, the last master who remembers the true sound of the Weave.",
+        "As you approach, a voice, powerful and sharp as a trumpet's blast, echoes from the tower's peak...",
+        "Another stray Echo, drawn to the flame? The Harmony is not a toy! If the simplest dissonance of that creature overwhelms you, you are not worthy of my teachings. Prove you can even tell up from down!"
     ];
 
     const tutorialRewardMessages: string[] = [
@@ -45,14 +48,13 @@
     interface TutorialAttack {
         type: 'higher' | 'lower' | 'equal';
         notes: [Note, Note];
-        correctAction: 'Bend' | 'Jump' | 'Brace';
     }
 
     const tutorialCombatSequence: TutorialAttack[] = [
-        { type: 'higher', notes: ['C4', 'E4'], correctAction: 'Bend' },
-        { type: 'lower', notes: ['G4', 'D4'], correctAction: 'Jump' },
-        { type: 'equal', notes: ['F4', 'F4'], correctAction: 'Brace' },
-        { type: 'higher', notes: ['D4', 'A4'], correctAction: 'Bend' }
+        { type: 'higher', notes: ['C4', 'E4'] },
+        { type: 'lower', notes: ['G4', 'D4'] },
+        { type: 'equal', notes: ['F4', 'F4'] },
+        { type: 'higher', notes: ['D4', 'A4'] }
     ];
 
     const spellbook: Record<SpellName, Spell> = {
@@ -71,23 +73,46 @@
         enemyHealth = 100;
         message = "The battle begins!";
         
-        // Only include Major Third and Perfect Fifth for the main battle
         const initialSpells: SpellName[] = ['Major Third', 'Perfect Fifth'];
         choices = initialSpells.sort(() => 0.5 - Math.random());
 
         enemyAttack();
     }
 
+    function getIntervalType(note1: Note, note2: Note): 'higher' | 'lower' | 'equal' {
+        const freq1 = Frequency(note1).toFrequency();
+        const freq2 = Frequency(note2).toFrequency();
+
+        if (freq2 > freq1) {
+            return 'higher';
+        } else if (freq2 < freq1) {
+            return 'lower';
+        } else {
+            return 'equal';
+        }
+    }
+
     function handleTutorialAction(action: 'Bend' | 'Jump' | 'Brace'): void {
         const currentAttack = tutorialCombatSequence[tutorialCombatIndex];
         if (!currentAttack) return;
 
-        if (action === currentAttack.correctAction) {
+        const expectedIntervalType = getIntervalType(currentAttack.notes[0], currentAttack.notes[1]);
+
+        let mappedAction: 'higher' | 'lower' | 'equal';
+        if (action === 'Bend') {
+            mappedAction = 'higher';
+        } else if (action === 'Jump') {
+            mappedAction = 'lower';
+        } else {
+            mappedAction = 'equal';
+        }
+
+        if (mappedAction === expectedIntervalType) {
             enemyHealth -= 34;
             message = `Correct! You chose ${action} and deal 34 damage!`;
         } else {
             playerHealth -= 25;
-            message = `Wrong! It was a ${currentAttack.correctAction}. You take 25 damage!`;
+            message = `Wrong! It was a ${currentAnswer}. You take 25 damage!`;
         }
 
         tutorialCombatIndex++;
@@ -97,7 +122,6 @@
             tutorialPhase = 'reward';
         } else if (playerHealth <= 0) {
             message = "You have been defeated... The world remains in dissonance.";
-            // Optionally transition to a game over state or restart tutorial
         } else if (tutorialCombatIndex >= tutorialCombatSequence.length) {
             tutorialPhase = 'reward';
         } else {
@@ -146,6 +170,8 @@
             if (tutorialMessageIndex >= tutorialIntroMessages.length) {
                 tutorialPhase = 'learningPitch';
                 tutorialMessageIndex = 0;
+            } else if (tutorialMessageIndex === 1) {
+                playGreatHarmonyTheme();
             }
         } else if (tutorialPhase === 'reward') {
             tutorialMessageIndex++;
@@ -194,16 +220,32 @@
         {:else if tutorialPhase === 'learningPitch'}
             {#if learningPitchStep === 0}
                 <div class="message-log">
-                    <p>Mentor: Listen closely. I will play a note, then a second one. If the second note is HIGHER, you must 'Bend' the sound.</p>
+                    <p>Maestro Bethovan: Pay attention, Echo! The beast's dissonance is not random. It strikes high or low. You must learn to feel the difference.</p>
                 </div>
-                <button on:click={() => { playMelodicInterval('C4', 'E4'); }}>Play Higher Notes</button>
-                <button on:click={() => { learningPitchStep = 1; }}>Bend</button>
+                <button class="start-button" on:click={() => { learningPitchStep = 1; }}>Next</button>
             {:else if learningPitchStep === 1}
                 <div class="message-log">
-                    <p>Mentor: Good. Now, if the second note is LOWER, you must 'Jump' the sound.</p>
+                    <p>Maestro Bethovan: First, the High Attack. When its shriek rises in pitch, it aims for your head! You must BEND beneath it. Like this!</p>
                 </div>
-                <button on:click={() => { playMelodicInterval('G4', 'D4'); }}>Play Lower Notes</button>
-                <button on:click={() => { tutorialPhase = 'combat'; playNextTutorialAttack(); }}>Jump</button>
+                <button on:click={() => { playMelodicInterval('C4', 'G4'); }}>Play High Attack</button>
+                <button on:click={() => { learningPitchStep = 2; }}>Bend</button>
+            {:else if learningPitchStep === 2}
+                <div class="message-log">
+                    <p>Maestro Bethovan: Good. Now, the Low Attack. When its growl falls in pitch, it strikes at your core! You must JUMP over it. Observe!</p>
+                </div>
+                <button on:click={() => { playMelodicInterval('G4', 'C4'); }}>Play Low Attack</button>
+                <button on:click={() => { learningPitchStep = 3; }}>Jump</button>
+            {:else if learningPitchStep === 3}
+                <div class="message-log">
+                    <p>Maestro Bethovan: Finally, the most dangerous of all. If its focus does not change pitch, it is gathering power for a direct blast! You must BRACE for the impact!</p>
+                </div>
+                <button on:click={() => { playMelodicInterval('E4', 'E4'); }}>Play Brace Attack</button>
+                <button on:click={() => { learningPitchStep = 4; }}>Brace</button>
+            {:else if learningPitchStep === 4}
+                <div class="message-log">
+                    <p>Maestro Bethovan: The lesson is over. Now, face the creature. Do not fail me.</p>
+                </div>
+                <button class="start-button" on:click={() => { tutorialPhase = 'combat'; playNextTutorialAttack(); }}>Next</button>
             {/if}
         {:else if tutorialPhase === 'combat' || tutorialPhase === 'climax'}
             <div class="battle-scene">
@@ -226,7 +268,7 @@
             <div class="spellbook">
                 <button on:click={() => handleTutorialAction('Bend')}>Bend</button>
                 <button on:click={() => handleTutorialAction('Jump')}>Jump</button>
-                {#if tutorialCombatSequence[tutorialCombatIndex] && tutorialCombatSequence[tutorialCombatIndex].correctAction === 'Brace'}
+                {#if tutorialCombatSequence[tutorialCombatIndex] && getIntervalType(tutorialCombatSequence[tutorialCombatIndex].notes[0], tutorialCombatSequence[tutorialCombatIndex].notes[1]) === 'equal'}
                     <button on:click={() => handleTutorialAction('Brace')}>Brace</button>
                 {/if}
             </div>
@@ -333,6 +375,7 @@
     
     .character-pane:last-child .health-fill {
         background-color: var(--enemy-health);
+        height: 30px;
     }
     
     .message-log {
