@@ -19,8 +19,7 @@
 
     let playerHealth: number = 100;
     let enemyHealth: number = 100;
-    let message: string;
-    $: message = $t('battle.start_message');
+    let message: string = ' ';
     let choices: SpellName[] = [];
     let currentAnswer: SpellName | null = null;
     let isBattling: boolean = false;
@@ -33,20 +32,20 @@
     let learningPitchStep: number = 0;
 
     const tutorialIntroMessages: string[] = [
-        $t('tutorial.intro_message_0'),
-        $t('tutorial.intro_message_1'),
-        $t('tutorial.intro_message_2'),
-        $t('tutorial.intro_message_3'),
-        $t('tutorial.intro_message_4'),
-        $t('tutorial.intro_message_5'),
-        $t('tutorial.intro_message_6')
+        'tutorial.intro_message_0',
+        'tutorial.intro_message_1',
+        'tutorial.intro_message_2',
+        'tutorial.intro_message_3',
+        'tutorial.intro_message_4',
+        'tutorial.intro_message_5',
+        'tutorial.intro_message_6'
     ];
 
     const tutorialRewardMessages: string[] = [
-        $t('tutorial.reward_message_0'),
-        $t('tutorial.reward_message_1'),
-        $t('tutorial.reward_message_2'),
-        $t('tutorial.reward_message_3')
+        'tutorial.reward_message_0',
+        'tutorial.reward_message_1',
+        'tutorial.reward_message_2',
+        'tutorial.reward_message_3'
     ];
 
     interface TutorialAttack {
@@ -221,7 +220,7 @@
 
             {#if gameState === 'tutorial'}
                 {#if tutorialPhase === 'intro'}
-                    <div class="message-log">{tutorialIntroMessages[tutorialMessageIndex]}</div>
+                    <div class="message-log">{$t(tutorialIntroMessages[tutorialMessageIndex])}</div>
                     <button class="start-button" on:click={advanceTutorial}>
                         Next
                     </button>
@@ -283,7 +282,7 @@
                         {/if}
                     </div>
                 {:else if tutorialPhase === 'reward'}
-                    <div class="message-log">{tutorialRewardMessages[tutorialMessageIndex]}</div>
+                    <div class="message-log">{$t(tutorialRewardMessages[tutorialMessageIndex])}</div>
                     <button class="start-button" on:click={advanceTutorial}>
                         Next
                     </button>
