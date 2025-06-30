@@ -1,47 +1,119 @@
-Prompt for an AI Development Agent
-Project Context:
-"We are enhancing the lore of our Svelte+TS game, 'Aetheria'. We have decided that the melodic theme for the 'Great Harmony' will be the main phrase from Beethoven's 'Ode to Joy'. We need to implement a reusable function in our SoundEngine.ts to play this melody on command."
-Step 1: Define a New Synthesizer for the Theme
-Instruction:
-"In src/lib/SoundEngine.ts, define a new, secondary synthesizer instance to be used exclusively for the Great Harmony theme.
-Name the new constant harmonySynth.
-Instantiate it as a new Tone.Synth().
-Configure its oscillator to have a type of 'sine' to give it a pure, fundamental sound.
-Configure its envelope for a softer sound: attack: 0.1, decay: 0.2, sustain: 0.5, release: 1.
-Chain the .toDestination() method to route its audio output."
-Step 2: Transcribe the "Ode to Joy" Melody
-Instruction:
-"Create a data structure that represents the notes and timing for the main theme of 'Ode to Joy'.
-Define a constant named odeToJoyMelody.
-It should be an array of objects.
-Each object must contain three properties: time (string), note (string), and duration (string).
-Use Tone.js transport time notation ('Bars:Quarters') for the time property.
-Populate the array with the following 15 note events:
-{ time: '0:0', note: 'E4', duration: '4n' }
-{ time: '0:1', note: 'E4', duration: '4n' }
-{ time: '0:2', note: 'F4', duration: '4n' }
-{ time: '0:3', note: 'G4', duration: '4n' }
-{ time: '1:0', note: 'G4', duration: '4n' }
-{ time: '1:1', note: 'F4', duration: '4n' }
-{ time: '1:2', note: 'E4', duration: '4n' }
-{ time: '1:3', note: 'D4', duration: '4n' }
-{ time: '2:0', note: 'C4', duration: '4n' }
-{ time: '2:1', note: 'C4', duration: '4n' }
-{ time: '2:2', note: 'D4', duration: '4n' }
-{ time: '2:3', note: 'E4', duration: '4n' }
-{ time: '3:0', note: 'E4', duration: '2n' }
-{ time: '3:2', note: 'D4', duration: '2n' }"
-Step 3: Create a Tone.Part to Schedule the Melody
-Instruction:
-"Use Tone.js's Tone.Part to schedule the playback of the odeToJoyMelody array.
-Define a new constant named harmonyPart.
-Instantiate it as a new Tone.Part().
-The first argument for the Tone.Part constructor is a callback function: (time, value) => { harmonySynth.triggerAttackRelease(value.note, value.duration, time); }. This function tells Tone.js what to do for each note event.
-The second argument is the odeToJoyMelody array we created in the previous step.
-Set the loop property of harmonyPart to false."
-Step 4: Export a Function to Play the Theme
-Instruction:
-"Create and export a new function that other parts of the application can call to play the Great Harmony theme.
-Define a new exported function named playGreatHarmonyTheme(): void.
-Inside this function, add a defensive check: if (Tone.context.state !== 'running') { Tone.context.resume(); }. This handles browser audio policies.
-The main action of the function is to call Tone.Transport.start(). This will start the master clock and trigger the harmonyPart to play."
+The Plan: A Step-by-Step Guide
+Phase 1: Setup and Basic Implementation
+Objective: Get the core translation system working for one or two pieces of text.
+Install the Library:
+Open your terminal in the project root.
+Run the command: bun add svelte-i18n
+Create the Translation Files:
+In your src/lib/ folder, create a new subfolder called translations.
+Inside src/lib/translations, create your language files. Start with English and one other language (e.g., Portuguese).
+en.json
+pt.json
+Populate the JSON Files:
+Your JSON files will contain key-value pairs. The "key" is the identifier you'll use in your code, and the "value" is the translated text.
+File: src/lib/translations/en.json
+Generated json
+{
+  "app": {
+    "title": "Aetheria: The Sound-Sorcerer's Quest"
+  },
+  "tutorial": {
+    "mentor_greeting": "Pay attention, Echo! The beast's dissonance is not random.",
+    "action_bend": "Bend",
+    "action_jump": "Jump",
+    "action_brace": "Brace"
+  }
+}
+Use code with caution.
+Json
+File: src/lib/translations/pt.json
+Generated json
+{
+  "app": {
+    "title": "Aetheria: A Jornada do Feiticeiro do Som"
+  },
+  "tutorial": {
+    "mentor_greeting": "Preste atenção, Eco! A dissonância da besta não é aleatória.",
+    "action_bend": "Agachar",
+    "action_jump": "Pular",
+    "action_brace": "Firmar"
+  }
+}
+Use code with caution.
+Json
+Notice the nested structure (app.title). This is great for organization.
+Initialize the Library:
+Create a new file in src/lib/ called i18n.ts. This file will set up and configure the library.
+File: src/lib/i18n.ts
+Generated typescript
+import { register, init, getLocaleFromNavigator } from 'svelte-i18n';
+
+// Register all your languages
+register('en', () => import('./translations/en.json'));
+register('pt', () => import('./translations/pt.json'));
+
+// Initialize the library
+init({
+    fallbackLocale: 'en',
+    initialLocale: getLocaleFromNavigator(), // Automatically detects browser language
+});
+Use code with caution.
+TypeScript
+Connect to Your App:
+The final step is to import this setup file into your main component so it runs when the app starts.
+At the very top of the <script> section in src/App.svelte, add:
+Generated typescript
+import './lib/i18n'; // Run the i18n setup
+import { t } from 'svelte-i18n'; // Import the translation function
+Use code with caution.
+TypeScript
+Use it in Your Svelte Code:
+Now you can replace hard-coded text. The $t store is reactive, so if the language changes, the text will update automatically.
+Before:
+Generated html
+<h1>Aetheria: The Sound-Sorcerer's Quest</h1>
+<button>Bend</button>
+Use code with caution.
+Html
+After:
+Generated html
+<h1>{$t('app.title')}</h1>
+<button>{$t('tutorial.action_bend')}</button>
+Use code with caution.
+Html
+Phase 2: Full Integration
+Objective: Abstract all user-facing text into your JSON files.
+Create a Language Switcher (for testing):
+Build a simple UI component that allows the user to change the language. This is essential for you to test your translations.
+The svelte-i18n library exports a writable store called locale. You can bind a dropdown select to it.
+Example LanguageSwitcher.svelte component:
+Generated html
+<script lang="ts">
+  import { locale } from 'svelte-i18n';
+</script>
+
+<select bind:value={$locale}>
+  <option value="en">English</option>
+  <option value="pt">Português</option>
+</select>
+Use code with caution.
+Html
+Externalize All Strings:
+Go through your entire application (App.svelte and any other components).
+Identify every single string that the user sees.
+For each string, create a unique, descriptive key in your en.json file (e.g., tutorial.intro_message_1, battle.victory_message).
+Replace the hard-coded string in your Svelte component with the $t('your.key.here') syntax.
+This is the most time-consuming part, but it's crucial.
+Phase 3: The Translation Process (Workflow)
+Objective: Get your English text translated into other languages efficiently.
+Establish a "Source of Truth":
+Your en.json file is now the master file. All other languages will be a translation of this file. Never make content changes directly to other language files.
+Choose a Translation Strategy:
+Manual (You or a friend): If you are bilingual or have friends who can help, you can simply give them the en.json file and ask them to create a translated version (e.g., es.json, fr.json).
+Machine Translation (for speed/prototyping): Use tools like Google Translate or DeepL to get a quick, first-pass translation of your en.json. Warning: Machine translation is often awkward and lacks nuance, especially for creative/lore text. It's a good starting point but should always be reviewed by a native speaker.
+Professional Services (for quality): For a commercial release, use professional translation services. There are platforms (like Lokalise, Crowdin, or Transifex) that are designed specifically for software i18n. You upload your en.json, and professional translators provide the translations in a structured way.
+Maintain and Update:
+When you add a new feature with new text, the process is:
+Add the new keys and English text to en.json.
+Send the new keys only to your translators (or run them through machine translation).
+Add the translated text to the other language files (pt.json, etc.).

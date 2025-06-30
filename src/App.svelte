@@ -1,6 +1,4 @@
 <script lang="ts">
-    import './lib/i18n'; // Run the i18n setup
-    
     import { t } from 'svelte-i18n'; // Import the translation function
     import { i18nInit } from './lib/i18n';
     import { playMelodicInterval, type Note, playGreatHarmonyTheme } from './lib/sound.engine';
@@ -216,6 +214,8 @@
 
 <main>
     {#await i18nInit}
+        <p>Loading translations...</p>
+    {:then _}
         <LanguageSwitcher />
         <h1>{$t('app.title')}</h1>
 
@@ -325,10 +325,8 @@
             {:else if gameState === 'map'}
                 <h1>World Map</h1>
             {/if}
-        {:else}
-            <!-- Loading state or error message if i18n is not ready -->
-            <p>Loading translations...</p>
-        {/if}
+    {:catch error}
+        <p>Error loading translations: {error.message}</p>
     {/await}
 </main>
 
