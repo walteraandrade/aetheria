@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { t } from 'svelte-i18n'; // Import the translation function
-    import { i18nInit } from './lib/i18n';
+    import { t, isLoading } from 'svelte-i18n'; // Import the translation function
+    import './lib/i18n';
     import { playMelodicInterval, type Note, playGreatHarmonyTheme } from './lib/sound.engine';
     import * as Tone from 'tone';
     import { Frequency } from 'tone';
@@ -19,7 +19,8 @@
 
     let playerHealth: number = 100;
     let enemyHealth: number = 100;
-    let message: string = ' ';
+    let message: string;
+    $: message = $t('battle.start_message');
     let choices: SpellName[] = [];
     let currentAnswer: SpellName | null = null;
     let isBattling: boolean = false;
@@ -212,9 +213,9 @@
 </script>
 
 <main>
-    {#await i18nInit}
+    {#if $isLoading}
         <p>Loading translations...</p>
-    {:then _}
+    {:else}
         <LanguageSwitcher />
         <h1>{$t('app.title')}</h1>
 
@@ -324,9 +325,7 @@
             {:else if gameState === 'map'}
                 <h1>World Map</h1>
             {/if}
-    {:catch error}
-        <p>Error loading translations: {error.message}</p>
-    {/await}
+    {/if}
 </main>
 
 <style>
