@@ -1,9 +1,13 @@
-import { mount } from 'svelte'
-import './app.css'
-import App from './App.svelte'
+import { mount } from 'svelte';
+import App from './App.svelte';
+import { init, getLocaleFromNavigator } from 'svelte-i18n';
+import './app.css';
 
-const app = mount(App, {
+await init({
+  fallbackLocale: 'en',
+  initialLocale: getLocaleFromNavigator(),
+});
+
+mount(App, {
   target: document.getElementById('app')!,
-})
-
-export default app
+});

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { t, isLoading } from 'svelte-i18n'; // Import the translation function
     import './lib/i18n';
+    import { t, isLoading } from 'svelte-i18n';
     import { playMelodicInterval, type Note, playGreatHarmonyTheme } from './lib/sound.engine';
     import * as Tone from 'tone';
     import { Frequency } from 'tone';
@@ -213,119 +213,115 @@
 </script>
 
 <main>
-    {#if $isLoading}
-        <p>Loading translations...</p>
-    {:else}
-        <LanguageSwitcher />
-        <h1>{$t('app.title')}</h1>
+    <LanguageSwitcher />
+    <h1>{$t('app.title')}</h1>
 
-            {#if gameState === 'tutorial'}
-                {#if tutorialPhase === 'intro'}
-                    <div class="message-log">{$t(tutorialIntroMessages[tutorialMessageIndex])}</div>
-                    <button class="start-button" on:click={advanceTutorial}>
-                        Next
-                    </button>
-                {:else if tutorialPhase === 'learningPitch'}
-                    {#if learningPitchStep === 0}
-                        <div class="message-log">
-                            <p>{$t('tutorial.learning_pitch_0')}</p>
+        {#if gameState === 'tutorial'}
+            {#if tutorialPhase === 'intro'}
+                <div class="message-log">{$t(tutorialIntroMessages[tutorialMessageIndex])}</div>
+                <button class="start-button" on:click={advanceTutorial}>
+                    Next
+                </button>
+            {:else if tutorialPhase === 'learningPitch'}
+                {#if learningPitchStep === 0}
+                    <div class="message-log">
+                        <p>{$t('tutorial.learning_pitch_0')}</p>
+                    </div>
+                    <button class="start-button" on:click={() => { learningPitchStep = 1; }}>Next</button>
+                {:else if learningPitchStep === 1}
+                    <div class="message-log">
+                        <p>{$t('tutorial.learning_pitch_1')}</p>
+                    </div>
+                    <button on:click={() => { playMelodicInterval('C4', 'G4'); }}>Play High Attack</button>
+                    <button on:click={() => { learningPitchStep = 2; }}>{$t('tutorial.action_bend')}</button>
+                {:else if learningPitchStep === 2}
+                    <div class="message-log">
+                        <p>{$t('tutorial.learning_pitch_2')}</p>
+                    </div>
+                    <button on:click={() => { playMelodicInterval('G4', 'C4'); }}>Play Low Attack</button>
+                    <button on:click={() => { learningPitchStep = 3; }}>{$t('tutorial.action_jump')}</button>
+                {:else if learningPitchStep === 3}
+                    <div class="message-log">
+                        <p>{$t('tutorial.learning_pitch_3')}</p>
+                    </div>
+                    <button on:click={() => { playMelodicInterval('E4', 'E4'); }}>Play Brace Attack</button>
+                    <button on:click={() => { learningPitchStep = 4; }}>{$t('tutorial.action_brace')}</button>
+                {:else if learningPitchStep === 4}
+                    <div class="message-log">
+                        <p>{$t('tutorial.learning_pitch_4')}</p>
+                    </div>
+                    <button class="start-button" on:click={() => { tutorialPhase = 'combat'; playNextTutorialAttack(); }}>Next</button>
+                {/if}
+            {:else if tutorialPhase === 'combat' || tutorialPhase === 'climax'}
+                <div class="battle-scene">
+                    <div class="character-pane">
+                        <h2>{$t('character_names.player')}</h2>
+                        <div class="health-bar">
+                            <div class="health-fill" style="width: {playerHealth}%;"></div>
+                            <span>{playerHealth} / 100 HP</span>
                         </div>
-                        <button class="start-button" on:click={() => { learningPitchStep = 1; }}>Next</button>
-                    {:else if learningPitchStep === 1}
-                        <div class="message-log">
-                            <p>{$t('tutorial.learning_pitch_1')}</p>
+                    </div>
+                    <div class="character-pane">
+                        <h2>{$t('character_names.enemy_beast')}</h2>
+                        <div class="health-bar">
+                            <div class="health-fill" style="width: {enemyHealth}%;"></div>
+                            <span>{enemyHealth} / 100 HP</span>
                         </div>
-                        <button on:click={() => { playMelodicInterval('C4', 'G4'); }}>Play High Attack</button>
-                        <button on:click={() => { learningPitchStep = 2; }}>{$t('tutorial.action_bend')}</button>
-                    {:else if learningPitchStep === 2}
-                        <div class="message-log">
-                            <p>{$t('tutorial.learning_pitch_2')}</p>
-                        </div>
-                        <button on:click={() => { playMelodicInterval('G4', 'C4'); }}>Play Low Attack</button>
-                        <button on:click={() => { learningPitchStep = 3; }}>{$t('tutorial.action_jump')}</button>
-                    {:else if learningPitchStep === 3}
-                        <div class="message-log">
-                            <p>{$t('tutorial.learning_pitch_3')}</p>
-                        </div>
-                        <button on:click={() => { playMelodicInterval('E4', 'E4'); }}>Play Brace Attack</button>
-                        <button on:click={() => { learningPitchStep = 4; }}>{$t('tutorial.action_brace')}</button>
-                    {:else if learningPitchStep === 4}
-                        <div class="message-log">
-                            <p>{$t('tutorial.learning_pitch_4')}</p>
-                        </div>
-                        <button class="start-button" on:click={() => { tutorialPhase = 'combat'; playNextTutorialAttack(); }}>Next</button>
+                    </div>
+                </div>
+
+                <div class="message-log">{message}</div>
+
+                <div class="spellbook">
+                    <button on:click={() => handleTutorialAction('Bend')}>{$t('tutorial.action_bend')}</button>
+                    <button on:click={() => handleTutorialAction('Jump')}>{$t('tutorial.action_jump')}</button>
+                    {#if tutorialCombatSequence[tutorialCombatIndex] && getIntervalType(tutorialCombatSequence[tutorialCombatIndex].notes[0], tutorialCombatSequence[tutorialCombatIndex].notes[1]) === 'equal'}
+                        <button on:click={() => handleTutorialAction('Brace')}>{$t('tutorial.action_brace')}</button>
                     {/if}
-                {:else if tutorialPhase === 'combat' || tutorialPhase === 'climax'}
-                    <div class="battle-scene">
-                        <div class="character-pane">
-                            <h2>{$t('character_names.player')}</h2>
-                            <div class="health-bar">
-                                <div class="health-fill" style="width: {playerHealth}%;"></div>
-                                <span>{playerHealth} / 100 HP</span>
-                            </div>
-                        </div>
-                        <div class="character-pane">
-                            <h2>{$t('character_names.enemy_beast')}</h2>
-                            <div class="health-bar">
-                                <div class="health-fill" style="width: {enemyHealth}%;"></div>
-                                <span>{enemyHealth} / 100 HP</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="message-log">{message}</div>
-
-                    <div class="spellbook">
-                        <button on:click={() => handleTutorialAction('Bend')}>{$t('tutorial.action_bend')}</button>
-                        <button on:click={() => handleTutorialAction('Jump')}>{$t('tutorial.action_jump')}</button>
-                        {#if tutorialCombatSequence[tutorialCombatIndex] && getIntervalType(tutorialCombatSequence[tutorialCombatIndex].notes[0], tutorialCombatSequence[tutorialCombatIndex].notes[1]) === 'equal'}
-                            <button on:click={() => handleTutorialAction('Brace')}>{$t('tutorial.action_brace')}</button>
-                        {/if}
-                    </div>
-                {:else if tutorialPhase === 'reward'}
-                    <div class="message-log">{$t(tutorialRewardMessages[tutorialMessageIndex])}</div>
-                    <button class="start-button" on:click={advanceTutorial}>
-                        Next
-                    </button>
-                {/if}
-            {:else if gameState === 'battle'}
-                {#if !isBattling}
-                    <div class="message-log">{message}</div>
-                    <button class="start-button" on:click={startBattle}>
-                        {playerHealth <= 0 ? $t('battle.start_button_try_again') : $t('battle.start_button_start_quest')}
-                    </button>
-                {:else}
-                    <div class="battle-scene">
-                        <div class="character-pane">
-                            <h2>{$t('character_names.player')}</h2>
-                            <div class="health-bar">
-                                <div class="health-fill" style="width: {playerHealth}%;"></div>
-                                <span>{playerHealth} / 100 HP</span>
-                            </div>
-                        </div>
-                        <div class="character-pane">
-                            <h2>{$t('character_names.enemy_imp')}</h2>
-                            <div class="health-bar">
-                                <div class="health-fill" style="width: {enemyHealth}%;"></div>
-                                <span>{enemyHealth} / 100 HP</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="message-log">{message}</div>
-
-                    <div class="spellbook">
-                        {#each choices as choice}
-                            <button on:click={() => handlePlayerChoice(choice)}>
-                                {$t('battle.cast_spell', { values: { choice } })}
-                            </button>
-                        {/each}
-                    </div>
-                {/if}
-            {:else if gameState === 'map'}
-                <h1>World Map</h1>
+                </div>
+            {:else if tutorialPhase === 'reward'}
+                <div class="message-log">{$t(tutorialRewardMessages[tutorialMessageIndex])}</div>
+                <button class="start-button" on:click={advanceTutorial}>
+                    Next
+                </button>
             {/if}
-    {/if}
+        {:else if gameState === 'battle'}
+            {#if !isBattling}
+                <div class="message-log">{message}</div>
+                <button class="start-button" on:click={startBattle}>
+                    {playerHealth <= 0 ? $t('battle.start_button_try_again') : $t('battle.start_button_start_quest')}
+                </button>
+            {:else}
+                <div class="battle-scene">
+                    <div class="character-pane">
+                        <h2>{$t('character_names.player')}</h2>
+                        <div class="health-bar">
+                            <div class="health-fill" style="width: {playerHealth}%;"></div>
+                            <span>{playerHealth} / 100 HP</span>
+                        </div>
+                    </div>
+                    <div class="character-pane">
+                        <h2>{$t('character_names.enemy_imp')}</h2>
+                        <div class="health-bar">
+                            <div class="health-fill" style="width: {enemyHealth}%;"></div>
+                            <span>{enemyHealth} / 100 HP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message-log">{message}</div>
+
+                <div class="spellbook">
+                    {#each choices as choice}
+                        <button on:click={() => handlePlayerChoice(choice)}>
+                            {$t('battle.cast_spell', { values: { choice } })}
+                        </button>
+                    {/each}
+                </div>
+            {/if}
+        {:else if gameState === 'map'}
+            <h1>World Map</h1>
+        {/if}
 </main>
 
 <style>
