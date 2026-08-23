@@ -28,16 +28,15 @@ const playNote = (midi, delay, dur, type, gain, pan = 0) => {
   osc.stop(when + dur + 0.05);
 };
 
-export const singInterval = (semitones, root, type, gain, pan = 0, delay = 0) => {
-  playNote(root, delay + 0.03, 0.45, type, gain, pan);
-  playNote(root + semitones, delay + 0.53, 0.45, type, gain, pan);
+export const singInterval = (semitones, root, type, gain, pan = 0) => {
+  playNote(root, 0.03, 0.45, type, gain, pan);
+  playNote(root + semitones, 0.53, 0.45, type, gain, pan);
 };
 
 export const sfx = {
   sword: () => playNote(70, 0, 0.08, 'square', 0.05),
   step: () => playNote(45, 0, 0.06, 'triangle', 0.05),
   pulse: () => playNote(64, 0, 0.18, 'triangle', 0.12),
-  thud: () => playNote(31, 0.3, 0.12, 'square', 0.1),
   hitEnemy: (pan = 0) => { playNote(76, 0, 0.1, 'square', 0.07, pan); playNote(83, 0.07, 0.12, 'square', 0.07, pan); },
   hurt: () => playNote(38, 0, 0.35, 'sawtooth', 0.16),
   doorOpen: (pan = 0) => [0, 4, 7, 12].forEach((s, i) => playNote(72 + s, i * 0.09, 0.3, 'triangle', 0.14, pan)),
