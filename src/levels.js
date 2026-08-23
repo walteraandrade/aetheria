@@ -1,0 +1,58 @@
+export const TILE = 32;
+
+// Map legend:
+//   #  solid wall
+//   P  player spawn
+//   D,G  doors — each sings an interval drawn from doorPools[char];
+//        striking the matching bell after hearing the door opens it
+//   C  crystal (goal)
+//   E  enemy spawn
+//   1-9  bells, indexed into bellKeys
+//
+// World fields:
+//   doorPools: { char: [interval keys] } — what each door may sing
+//   darkZones: tile rects where light fails; footsteps and Space-shouts
+//              reveal the world through sound ripples
+
+export const WORLD = {
+  id: 'overworld',
+  title: 'Aetheria',
+  intro:
+    'Um mundo só, e ele fala em intervalos. A oeste, o <strong>templo</strong> guarda sinos e uma porta ' +
+    'que canta. A leste, um portão canta um salto que nenhum sino do campo conhece — a chave é um ' +
+    '<strong>som</strong>, e sons se encontram explorando. No <strong>bosque escuro</strong>, a luz morre: ' +
+    'seus passos e seu grito (<strong>Espaço</strong>) acendem o mundo por um instante.',
+  startHint: 'O templo canta a oeste. O portão a leste espera uma resposta. <strong>Espaço</strong> ouve, <strong>X</strong> responde.',
+  bellKeys: ['p5', 'm3', 'p8', 'M3'],
+  doorPools: {
+    D: ['p5', 'm3', 'p8'],
+    G: ['M3'],
+  },
+  darkZones: [{ x0: 41, y0: 1, x1: 58, y1: 21 }],
+  map: [
+    '############################################################',
+    '####################....................#....#........#....#',
+    '#......#...........#....................#....#........#....#',
+    '#......#...........#....................#....#####....#....#',
+    '#......#...........#....................#....#........#....#',
+    '#......#...........#......##......##....#....#....#...#....#',
+    '#......#...........#......##......##....#....#....#...#....#',
+    '#......#...........#......##......##....#....#....#####....#',
+    '#......#..1........#....................#....#....#...#....#',
+    '#......#...........#....................#....#....#...#....#',
+    '#......#................................#....#....#........#',
+    '#..4...D..2.............P......E........G....#....#....###.#',
+    '#......#................................#..................#',
+    '#......#...........#....................#.........#...#....#',
+    '#......#..3........#....................#.........#...#....#',
+    '#......#...........#......##......##....#....######...#....#',
+    '#......#...........#......##......##....#....#....#...#....#',
+    '#......#...........#......##......##....#....#....#...#.C..#',
+    '#......#...........#....................#.........#........#',
+    '#......#...........#....................#....#....########.#',
+    '#......#...........#....................#....#....#........#',
+    '####################....................#....#....#........#',
+    '############################################################',
+  ],
+  winText: 'O coração do bosque para de se esconder. Você chegou até ele pelo ouvido — templo, portão e escuro.',
+};
