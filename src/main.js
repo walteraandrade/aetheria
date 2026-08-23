@@ -8,33 +8,23 @@ const ctx = cv.getContext('2d');
 const hintEl = document.getElementById('hint');
 const btnAgain = document.getElementById('btn-again');
 
-const setHint = (html) => { hintEl.innerHTML = html; };
-
-let world = null;
-
 const onEnd = (won) => {
   document.getElementById('end-title').textContent = won ? 'A névoa se abre' : 'A névoa te engole';
   document.getElementById('end-text').textContent = won
     ? WORLD.winText
     : 'Seu corpo caiu, mas o ouvido fica. As portas que você já abriu continuam abertas.';
-  btnAgain.textContent = 'Voltar à névoa';
   document.getElementById('ov-end').classList.remove('hidden');
 };
 
-const buildWorld = () => {
-  world = createGame({ level: WORLD, setHint, onEnd });
-  world.game.step = (dt) => { if (world.game.running) world.update(dt); };
-  window.game = world.game;
-  window.debugDraw = () => draw(ctx, world);
-  world.resetRun(false);
-};
+const world = createGame({
+  level: WORLD,
+  setHint: (html) => { hintEl.innerHTML = html; },
+  onEnd,
+});
+world.resetRun(false);
 
-const showStart = () => {
-  document.getElementById('start-title').textContent = WORLD.title;
-  document.getElementById('start-text').innerHTML = WORLD.intro;
-  document.getElementById('ov-end').classList.add('hidden');
-  document.getElementById('ov-start').classList.remove('hidden');
-};
+document.getElementById('start-title').textContent = WORLD.title;
+document.getElementById('start-text').innerHTML = WORLD.intro;
 
 document.addEventListener('keydown', (e) => {
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
@@ -64,6 +54,4 @@ const start = (keepDoors) => {
 document.getElementById('btn-start').addEventListener('click', () => start(false));
 btnAgain.addEventListener('click', () => start(!world.game.win));
 
-buildWorld();
-showStart();
 requestAnimationFrame(loop);
