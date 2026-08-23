@@ -1,4 +1,5 @@
 import { TILE } from './levels.js';
+import { sprites, drawSprite } from './sprites.js';
 
 let darkCv = null;
 
@@ -32,6 +33,11 @@ const drawDarkness = (ctx, world, camX, camY) => {
   game.ripples.forEach((r) => hole(r.x - camX, r.y - camY, r.r, Math.max(0, 1 - r.r / r.max)));
   ctx.drawImage(darkCv, 0, 0);
 };
+
+let heroFlip = false;
+let foeFlip = false;
+let prevPX = 0;
+let prevPY = 0;
 
 export const draw = (ctx, world) => {
   const { game, level, solids, bells, doors, crystal } = world;
@@ -90,24 +96,37 @@ export const draw = (ctx, world) => {
       ctx.stroke();
     }
     const singing = e.state === 'sing';
-    ctx.fillStyle = e.flash > 0 ? '#e0b45c' : (singing && Math.floor(e.t * 8) % 2 === 0 ? '#f0908f' : '#d05a5a');
-    ctx.save();
-    ctx.translate(e.x, e.y);
-    ctx.rotate(Math.PI / 4);
-    ctx.fillRect(-11, -11, 22, 22);
-    ctx.restore();
-    ctx.fillStyle = '#0f0c18';
-    ctx.fillRect(e.x - 5, e.y - 3, 3, 3);
-    ctx.fillRect(e.x + 2, e.y - 3, 3, 3);
+    const now = performance.now() / 1000;
+    if (e.state === 'dash') foeFlip = e.dx < 0;
+    else foeFlip = game.player.x < e.x;
+    const foeSheet = e.state === 'dash' || e.state === 'patrol' ? sprites.foeRun
+      : e.state === 'ring' ? sprites.foeAttack
+      : sprites.foeIdle;
+    const foeOpts = e.state === 'ring'
+      ? { t: 0.4 - e.t, fps: 10, once: true, flip: foeFlip, size: 92 }
+      : { t: now, flip: foeFlip, size: 92 };
+    const hitFlicker = e.flash > 0 && Math.floor(e.flash * 20) % 2 === 0;
+    const foeDrawn = hitFlicker || drawSprite(ctx, foeSheet, e.x, e.y - 8, foeOpts);
+    if (!foeDrawn) {
+      ctx.fillStyle = e.flash > 0 ? '#e0b45c' : (singing && Math.floor(e.t * 8) % 2 === 0 ? '#f0908f' : '#d05a5a');
+      ctx.save();
+      ctx.translate(e.x, e.y);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillRect(-11, -11, 22, 22);
+      ctx.restore();
+      ctx.fillStyle = '#0f0c18';
+      ctx.fillRect(e.x - 5, e.y - 3, 3, 3);
+      ctx.fillRect(e.x + 2, e.y - 3, 3, 3);
+    }
     for (let i = 0; i < e.hp; i++) {
       ctx.fillStyle = '#d05a5a';
-      ctx.fillRect(e.x - 12 + i * 9, e.y - 24, 6, 4);
+      ctx.fillRect(e.x - 12 + i * 9, e.y - 34, 6, 4);
     }
     if (singing) {
       ctx.fillStyle = '#e8e3d6';
       ctx.font = '12px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('♪♪', e.x, e.y - 30);
+      ctx.fillText('♪♪', e.x, e.y - 40);
     }
   });
 
@@ -123,13 +142,27 @@ export const draw = (ctx, world) => {
   }
 
   const p = game.player;
+  const moving = Math.hypot(p.x - prevPX, p.y - prevPY) > 0.1;
+  prevPX = p.x;
+  prevPY = p.y;
+  if (p.fx > 0.01) heroFlip = false;
+  else if (p.fx < -0.01) heroFlip = true;
+  const attacking = p.swordCd > 0;
+  const heroSheet = attacking ? sprites.heroAttack : moving ? sprites.heroRun : sprites.heroIdle;
+  const heroOpts = attacking
+    ? { t: 0.35 - p.swordCd, fps: 4 / 0.35, once: true, flip: heroFlip }
+    : { t: performance.now() / 1000, flip: heroFlip };
+  let heroDrawn = false;
   if (!(p.inv > 0 && Math.floor(p.inv * 10) % 2 === 0)) {
-    ctx.fillStyle = '#e0b45c';
-    ctx.fillRect(p.x - 9, p.y - 9, 18, 18);
-    ctx.fillStyle = '#0f0c18';
-    ctx.fillRect(p.x - 9 + (p.fx > 0 ? 10 : p.fx < 0 ? 2 : 6), p.y - 4, 6, 4);
+    heroDrawn = drawSprite(ctx, heroSheet, p.x, p.y - 8, heroOpts);
+    if (!heroDrawn) {
+      ctx.fillStyle = '#e0b45c';
+      ctx.fillRect(p.x - 9, p.y - 9, 18, 18);
+      ctx.fillStyle = '#0f0c18';
+      ctx.fillRect(p.x - 9 + (p.fx > 0 ? 10 : p.fx < 0 ? 2 : 6), p.y - 4, 6, 4);
+    }
   }
-  if (p.sword > 0) {
+  if (p.sword > 0 && !heroDrawn) {
     ctx.strokeStyle = '#e8e3d6';
     ctx.lineWidth = 3;
     ctx.beginPath();
