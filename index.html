@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aetheria</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <div class="stage">
+    <header>
+      <h1>AETHERIA</h1>
+      <div class="subtitle">a névoa fala em intervalos</div>
+    </header>
+    <div class="frame">
+      <canvas id="cv" width="640" height="352"></canvas>
+      <div class="overlay" id="ov-start">
+        <h2>O Salão dos Sinos</h2>
+        <p>A porta está trancada e <strong>canta duas notas</strong> quando você chega perto. Um dos três sinos canta o mesmo salto, em outra altura. Toque os sinos para comparar. Quando tiver certeza, <strong>golpeie o sino certo com a espada</strong>.</p>
+        <p>Do outro lado, uma criatura anuncia cada ataque cantando. O canto diz o que vem — e como escapar.</p>
+        <button id="btn-start">Acender a tocha</button>
+      </div>
+      <div class="overlay hidden" id="ov-end">
+        <h2 id="end-title"></h2>
+        <p id="end-text"></p>
+        <button id="btn-again">Voltar à névoa</button>
+      </div>
+    </div>
+    <div class="hint" id="hint"></div>
+    <div class="controls">setas / wasd mover &middot; espaço ouvir &middot; x espada</div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
