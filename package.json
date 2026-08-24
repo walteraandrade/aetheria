@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "map:export": "aseprite -b --script-param file=assets/maps/overworld.aseprite --script-param out=public/maps/overworld.json --script tools/export-map.lua",
+    "map:verify": "node tools/verify-roundtrip.mjs public/maps/overworld.json",
+    "map:build": "tools/build-maps.sh"
   },
   "devDependencies": {
     "vite": "^7.0.0"

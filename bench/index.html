@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Aetheria — world size bench</title>
+  <style>
+    body { background: #0f0c18; color: #e8e3d6; font: 13px/1.5 monospace; padding: 16px; }
+    canvas { image-rendering: pixelated; border: 1px solid #2f2949; display: block; margin-bottom: 12px; max-width: 100%; }
+    pre { white-space: pre; }
+    button { font: inherit; padding: 6px 12px; background: #2f2949; color: #e8e3d6; border: 0; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <canvas id="cv" width="1024" height="704"></canvas>
+  <button id="run">run bench</button> <button id="runbig">run big</button> <button id="runfps">run fps</button>
+  <pre id="out">idle</pre>
+  <script type="module" src="./bench.js"></script>
+</body>
+</html>

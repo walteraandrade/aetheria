@@ -1,4 +1,7 @@
+import { SCALE } from './levels.js';
+
 const FRAME = 192;
+const DEFAULT_SIZE = 84 * SCALE;
 
 const SHEETS = {
   heroIdle: { src: '/assets/tiny-swords/blue-warrior/idle.png', frames: 8 },
@@ -20,7 +23,7 @@ export const sprites = Object.fromEntries(
 );
 
 export const drawSprite = (ctx, sheet, x, y, opts = {}) => {
-  const { t = 0, flip = false, size = 84, fps = 10, once = false } = opts;
+  const { t = 0, flip = false, size = DEFAULT_SIZE, fps = 10, once = false } = opts;
   const { img, frames } = sheet;
   if (!img.complete || !img.naturalWidth) return false;
   const idx = once

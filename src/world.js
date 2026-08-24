@@ -1,8 +1,10 @@
 import { singInterval, sfx } from './audio.js';
 import { INTERVALS, randomRoot } from './intervals.js';
-import { TILE } from './levels.js';
+import { TILE, SCALE as S } from './levels.js';
 
-const parseMap = (level) => {
+const HALF = TILE / 2;
+
+export const parseMap = (level) => {
   const solids = [];
   const bells = [];
   const doors = [];
@@ -17,10 +19,10 @@ const parseMap = (level) => {
       if (level.doorPools && level.doorPools[ch]) {
         doors.push({ x, y, w: TILE, h: TILE, open: false, cooldown: 0, pool: level.doorPools[ch], interval: null, root: null });
       }
-      if (ch === 'C') crystal = { x: x + 16, y: y + 16 };
-      if (ch === 'E') enemySpawns.push({ x: x + 16, y: y + 16 });
-      if (ch === 'P') playerSpawn = { x: x + 16, y: y + 16 };
-      if (ch >= '1' && ch <= '9') bells.push({ x: x + 16, y: y + 16, key: level.bellKeys[+ch - 1], cooldown: 0 });
+      if (ch === 'C') crystal = { x: x + HALF, y: y + HALF };
+      if (ch === 'E') enemySpawns.push({ x: x + HALF, y: y + HALF });
+      if (ch === 'P') playerSpawn = { x: x + HALF, y: y + HALF };
+      if (ch >= '1' && ch <= '9') bells.push({ x: x + HALF, y: y + HALF, key: level.bellKeys[+ch - 1], cooldown: 0 });
     });
   });
   return { solids, bells, doors, crystal, enemySpawns, playerSpawn };
@@ -28,8 +30,9 @@ const parseMap = (level) => {
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
-export const createGame = ({ level, setHint, onEnd }) => {
-  const { solids, bells, doors, crystal, enemySpawns, playerSpawn } = parseMap(level);
+export const createGame = ({ level, parsed, setHint, onEnd, onPortal }) => {
+  const { solids, bells, doors, crystal, enemySpawns, playerSpawn, portals = [] } =
+    parsed ?? parseMap(level);
 
   const game = {
     running: false,
@@ -41,9 +44,10 @@ export const createGame = ({ level, setHint, onEnd }) => {
     win: false,
     keys: {},
     pulseCd: 0,
+    portalLock: false,
   };
 
-  const pan = (x) => Math.max(-1, Math.min(1, (x - game.player.x) / 320));
+  const pan = (x) => Math.max(-1, Math.min(1, (x - game.player.x) / (320 * S)));
 
   const inDark = (x, y) => {
     const tx = Math.floor(x / TILE);
@@ -51,26 +55,33 @@ export const createGame = ({ level, setHint, onEnd }) => {
     return (level.darkZones || []).some((z) => tx >= z.x0 && tx <= z.x1 && ty >= z.y0 && ty <= z.y1);
   };
 
-  const ripple = (x, y, color, max = 90) => game.ripples.push({ x, y, r: 8, max, color });
+  const ripple = (x, y, color, max = 90 * S) => game.ripples.push({ x, y, r: 8 * S, max, color });
+
+  const overlaps = (px, py, pw, ph, o) =>
+    px < o.x + o.w && px + pw > o.x && py < o.y + o.h && py + ph > o.y;
+
+  const portalUnder = (p) => portals.find((o) => overlaps(p.x - p.w / 2, p.y - p.h / 2, p.w, p.h, o));
 
   const isSolid = (px, py, pw, ph) => {
-    const hits = (s) => px < s.x + s.w && px + pw > s.x && py < s.y + s.h && py + ph > s.y;
+    const hits = (s) => overlaps(px, py, pw, ph, s);
     if (solids.some(hits)) return true;
     return doors.some((d) => !d.open && hits(d));
   };
 
   const spawnEnemy = (s) => ({
-    x: s.x, y: s.y, w: 22, h: 22, hp: 3, dead: false,
+    x: s.x, y: s.y, w: 22 * S, h: 22 * S, hp: 3, dead: false,
     state: 'patrol', t: 0, dir: 1, attack: null, dx: 0, dy: 0, ring: 0, flash: 0,
   });
 
   const resetRun = (keepDoors) => {
-    game.player = { x: playerSpawn.x, y: playerSpawn.y, w: 18, h: 18, hp: 3, inv: 0, fx: 1, fy: 0, sword: 0, swordCd: 0, stepT: 0 };
+    game.player = { x: playerSpawn.x, y: playerSpawn.y, w: 18 * S, h: 18 * S, hp: 3, inv: 0, fx: 1, fy: 0, sword: 0, swordCd: 0, stepT: 0 };
     game.enemies = enemySpawns.map(spawnEnemy);
     game.ripples = [];
     game.win = false;
     game.activeDoor = null;
     game.pulseCd = 0;
+    // Landing on a portal must not bounce the player straight back through it.
+    game.portalLock = portalUnder(game.player) !== undefined;
     bells.forEach((b) => { b.root = randomRoot(); });
     doors.forEach((d) => {
       if (!keepDoors) d.open = false;
@@ -87,13 +98,13 @@ export const createGame = ({ level, setHint, onEnd }) => {
       const d = dist(game.player, b);
       return d < acc.d ? { d, bell: b } : acc;
     }, { d: Infinity, bell: null });
-    return best.d < 34 ? best.bell : null;
+    return best.d < 34 * S ? best.bell : null;
   };
 
   const nearestClosedDoor = (maxD) => {
     const best = doors.reduce((acc, door) => {
       if (door.open) return acc;
-      const d = dist(game.player, { x: door.x + 16, y: door.y + 16 });
+      const d = dist(game.player, { x: door.x + HALF, y: door.y + HALF });
       return d < acc.d ? { d, door } : acc;
     }, { d: Infinity, door: null });
     return best.d < maxD ? best.door : null;
@@ -110,10 +121,10 @@ export const createGame = ({ level, setHint, onEnd }) => {
     if ((door.cooldown > 0 && !force) || door.open) return;
     door.cooldown = 1.3;
     game.activeDoor = door;
-    const d = dist(game.player, { x: door.x + 16, y: door.y + 16 });
-    const gain = Math.max(0.08, 0.26 - d / 1200);
-    singInterval(INTERVALS[door.interval].semitones, door.root, 'sine', gain, pan(door.x + 16));
-    ripple(door.x + 16, door.y + 16, '#d05a5a', 120);
+    const d = dist(game.player, { x: door.x + HALF, y: door.y + HALF });
+    const gain = Math.max(0.08, 0.26 - d / (1200 * S));
+    singInterval(INTERVALS[door.interval].semitones, door.root, 'sine', gain, pan(door.x + HALF));
+    ripple(door.x + HALF, door.y + HALF, '#d05a5a', 120 * S);
   };
 
   const hurtPlayer = (msg) => {
@@ -142,7 +153,7 @@ export const createGame = ({ level, setHint, onEnd }) => {
       setHint('O sino canta e o mundo inteiro escuta. <strong>X</strong> golpeia, se ele responde a alguma porta.');
       return;
     }
-    const door = nearestClosedDoor(44);
+    const door = nearestClosedDoor(44 * S);
     if (door) {
       doorSing(door, false);
       setHint('A porta cantou. Guarde o salto no ouvido: o sino que responde pode estar longe.');
@@ -151,7 +162,7 @@ export const createGame = ({ level, setHint, onEnd }) => {
     if (inDark(game.player.x, game.player.y) && game.pulseCd <= 0) {
       game.pulseCd = 1.2;
       sfx.pulse();
-      ripple(game.player.x, game.player.y, '#e8e3d6', 170);
+      ripple(game.player.x, game.player.y, '#e8e3d6', 170 * S);
     }
   };
 
@@ -172,8 +183,8 @@ export const createGame = ({ level, setHint, onEnd }) => {
       }
       if (bell.key === target.interval) {
         target.open = true;
-        sfx.doorOpen(pan(target.x + 16));
-        ripple(target.x + 16, target.y + 16, '#7cc48a', 140);
+        sfx.doorOpen(pan(target.x + HALF));
+        ripple(target.x + HALF, target.y + HALF, '#7cc48a', 140 * S);
         setHint('<span class="good">O sino responde e uma porta se desfaz, onde quer que ela cante.</span>');
       } else {
         hurtPlayer('O sino errado morde sua mão. A porta canta de novo — compare com calma.');
@@ -182,17 +193,17 @@ export const createGame = ({ level, setHint, onEnd }) => {
       return;
     }
 
-    const tipX = p.x + p.fx * 24;
-    const tipY = p.y + p.fy * 24;
+    const tipX = p.x + p.fx * 24 * S;
+    const tipY = p.y + p.fy * 24 * S;
     game.enemies.forEach((e) => {
-      if (e.dead || Math.hypot(tipX - e.x, tipY - e.y) >= 26) return;
+      if (e.dead || Math.hypot(tipX - e.x, tipY - e.y) >= 26 * S) return;
       e.hp--;
       e.flash = 0.2;
       sfx.hitEnemy(pan(e.x));
       if (e.hp <= 0) {
         e.dead = true;
         sfx.enemyDie(pan(e.x));
-        ripple(e.x, e.y, '#e0b45c', 130);
+        ripple(e.x, e.y, '#e0b45c', 130 * S);
         setHint('<span class="good">A criatura se desfaz em névoa.</span>');
       }
     });
@@ -205,15 +216,15 @@ export const createGame = ({ level, setHint, onEnd }) => {
     const d = dist(e, p);
 
     if (e.state === 'patrol') {
-      const ny = e.y + e.dir * 40 * dt;
+      const ny = e.y + e.dir * 40 * S * dt;
       if (!isSolid(e.x - e.w / 2, ny - e.h / 2, e.w, e.h)) e.y = ny;
       else e.dir = -e.dir;
-      if (d < 160) {
+      if (d < 160 * S) {
         e.state = 'sing';
         e.t = 1.5;
         e.attack = Math.random() < 0.5 ? 'dash' : 'ring';
         singInterval(e.attack === 'dash' ? 7 : 3, 55 + Math.floor(Math.random() * 12), 'sawtooth', 0.12, pan(e.x));
-        ripple(e.x, e.y, '#d05a5a', 110);
+        ripple(e.x, e.y, '#d05a5a', 110 * S);
         setHint('Ela canta. <strong>Quinta justa</strong>: investida — saia da linha. <strong>Terça menor</strong>: explosão — afaste-se.');
       }
     } else if (e.state === 'sing') {
@@ -229,26 +240,26 @@ export const createGame = ({ level, setHint, onEnd }) => {
           e.state = 'ring';
           e.t = 0.4;
           e.ring = 0;
-          if (d < 85) hurtPlayer('A explosão te alcança. Terça menor manda correr para longe.');
+          if (d < 85 * S) hurtPlayer('A explosão te alcança. Terça menor manda correr para longe.');
         }
       }
     } else if (e.state === 'dash') {
       e.t -= dt;
-      const nx = e.x + e.dx * 300 * dt;
-      const ny = e.y + e.dy * 300 * dt;
+      const nx = e.x + e.dx * 300 * S * dt;
+      const ny = e.y + e.dy * 300 * S * dt;
       if (!isSolid(nx - e.w / 2, ny - e.h / 2, e.w, e.h)) { e.x = nx; e.y = ny; } else e.t = 0;
-      if (d < 24) hurtPlayer('A investida te acerta. Quinta justa manda sair da linha.');
+      if (d < 24 * S) hurtPlayer('A investida te acerta. Quinta justa manda sair da linha.');
       if (e.t <= 0) { e.state = 'recover'; e.t = 1.1; }
     } else if (e.state === 'ring') {
       e.t -= dt;
-      e.ring += 260 * dt;
+      e.ring += 260 * S * dt;
       if (e.t <= 0) { e.state = 'recover'; e.t = 1.1; e.ring = 0; }
     } else if (e.state === 'recover') {
       e.t -= dt;
       if (e.t <= 0) e.state = 'patrol';
     }
 
-    if (e.state !== 'ring' && e.state !== 'sing' && !e.dead && d < 20) hurtPlayer('Encostar nela queima.');
+    if (e.state !== 'ring' && e.state !== 'sing' && !e.dead && d < 20 * S) hurtPlayer('Encostar nela queima.');
   };
 
   const update = (dt) => {
@@ -272,27 +283,35 @@ export const createGame = ({ level, setHint, onEnd }) => {
       const n = Math.hypot(mx, my);
       p.fx = mx / n;
       p.fy = my / n;
-      const nx = p.x + (mx / n) * 150 * dt;
+      const nx = p.x + (mx / n) * 150 * S * dt;
       if (!isSolid(nx - p.w / 2, p.y - p.h / 2, p.w, p.h)) p.x = nx;
-      const ny = p.y + (my / n) * 150 * dt;
+      const ny = p.y + (my / n) * 150 * S * dt;
       if (!isSolid(p.x - p.w / 2, ny - p.h / 2, p.w, p.h)) p.y = ny;
       if (inDark(p.x, p.y)) {
         p.stepT -= dt;
         if (p.stepT <= 0) {
           p.stepT = 0.35;
           sfx.step();
-          ripple(p.x, p.y, '#5a7fd0', 70);
+          ripple(p.x, p.y, '#5a7fd0', 70 * S);
         }
       }
     }
 
     game.enemies.forEach((e) => updateEnemy(e, dt));
 
-    game.ripples.forEach((r) => { r.r += 130 * dt; });
+    game.ripples.forEach((r) => { r.r += 130 * S * dt; });
     game.ripples = game.ripples.filter((r) => r.r < r.max);
 
-    if (crystal && dist(p, crystal) < 22) endRun(true);
+    const portal = portalUnder(p);
+    if (!portal) game.portalLock = false;
+    else if (!game.portalLock && onPortal) {
+      game.portalLock = true;
+      onPortal(portal);
+      return;
+    }
+
+    if (crystal && dist(p, crystal) < 22 * S) endRun(true);
   };
 
-  return { game, level, solids, bells, doors, crystal, update, interact, swing, resetRun };
+  return { game, level, solids, bells, doors, crystal, portals, update, interact, swing, resetRun };
 };
