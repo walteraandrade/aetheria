@@ -122,7 +122,7 @@ export const createGame = ({ level, parsed, setHint, onEnd, onPortal }) => {
     door.cooldown = 1.3;
     game.activeDoor = door;
     const d = dist(game.player, { x: door.x + HALF, y: door.y + HALF });
-    const gain = Math.max(0.08, 0.26 - d / 1200);
+    const gain = Math.max(0.08, 0.26 - d / (1200 * S));
     singInterval(INTERVALS[door.interval].semitones, door.root, 'sine', gain, pan(door.x + HALF));
     ripple(door.x + HALF, door.y + HALF, '#d05a5a', 120 * S);
   };

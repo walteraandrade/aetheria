@@ -240,21 +240,30 @@ const runBig = async () => {
 };
 
 
+// What each mode paints, so the comparison is like for like: naive and culled
+// do the same terrain pass, one over the whole map and one over the window.
+// `draw` is the shipped renderer, which culls and also paints entities and HUD.
+const PAINTERS = {
+  naive: (world, camX, camY) => terrainNaive(world, camX, camY),
+  culled: (world, camX, camY) => terrainCulled(world, camX, camY),
+  draw: (world) => draw(ctx, world),
+};
+
 const fpsTest = (world, mode, ms) => {
   // rAF is throttled when the tab is hidden, so measure the sustainable
-  // ceiling: how many full update+draw frames fit in a wall-clock window.
+  // ceiling: how many full update+paint frames fit in a wall-clock window.
+  const paint = PAINTERS[mode];
   world.game.keys['arrowright'] = true;
   const { camX, camY } = camOf(world);
   let frames = 0;
   let worst = 0;
-  for (let i = 0; i < 3; i++) { world.update(1 / 60); draw(ctx, world); }
+  for (let i = 0; i < 3; i++) { world.update(1 / 60); paint(world, camX, camY); }
   flush();
   const t0 = performance.now();
   while (performance.now() - t0 < ms) {
     const f0 = performance.now();
     world.update(1 / 60);
-    if (mode === 'naive') draw(ctx, world);
-    else terrainCulled(world, camX, camY);
+    paint(world, camX, camY);
     worst = Math.max(worst, performance.now() - f0);
     frames++;
   }
@@ -264,27 +273,35 @@ const fpsTest = (world, mode, ms) => {
   return { fps: frames / (elapsed / 1000), frameMs: elapsed / frames, worst };
 };
 
+const FPS_SCENARIOS = [
+  { label: '60x23 atual', cfg: { cols: 60, rows: 23, enemies: 1 } },
+  { label: '200x200', cfg: { cols: 200, rows: 200, enemies: 20 } },
+  { label: '400x400', cfg: { cols: 400, rows: 400, enemies: 20 } },
+  { label: '400x400 +200 foes', cfg: { cols: 400, rows: 400, enemies: 200 } },
+  { label: '1000x1000', cfg: { cols: 1000, rows: 1000, enemies: 20 } },
+];
+
 const runFps = async () => {
   ensureAudio();
-  const lines = [out.textContent, '', '=== teto de fps (update + draw, sem vsync) ==='];
-  lines.push('cenario                       frame ms   teto fps   pior frame');
+  const lines = [out.textContent, '', '=== teto de fps (update + pintura, sem vsync) ==='];
+  lines.push('cenario                  naive ms  culled ms   draw() ms  teto fps  pior frame');
   out.textContent = lines.join('\n');
-  for (const sc of [
-    { label: '60x23 atual (naive)', cfg: { cols: 60, rows: 23, enemies: 1 }, mode: 'naive' },
-    { label: '200x200 naive', cfg: { cols: 200, rows: 200, enemies: 20 }, mode: 'naive' },
-    { label: '400x400 naive', cfg: { cols: 400, rows: 400, enemies: 20 }, mode: 'naive' },
-    { label: '400x400 naive +200 foes', cfg: { cols: 400, rows: 400, enemies: 200 }, mode: 'naive' },
-    { label: '1000x1000 naive', cfg: { cols: 1000, rows: 1000, enemies: 20 }, mode: 'naive' },
-  ]) {
-    const world = makeWorld(sc.cfg);
-    const r = fpsTest(world, sc.mode, 700);
+  for (const sc of FPS_SCENARIOS) {
+    const naive = fpsTest(makeWorld(sc.cfg), 'naive', 700);
+    const culled = fpsTest(makeWorld(sc.cfg), 'culled', 700);
+    const full = fpsTest(makeWorld(sc.cfg), 'draw', 700);
     lines.push(
-      sc.label.padEnd(28) + r.frameMs.toFixed(2).padStart(9) +
-      r.fps.toFixed(0).padStart(11) + (r.worst.toFixed(1) + ' ms').padStart(13),
+      sc.label.padEnd(22) + naive.frameMs.toFixed(2).padStart(9) +
+      culled.frameMs.toFixed(2).padStart(11) + full.frameMs.toFixed(2).padStart(12) +
+      full.fps.toFixed(0).padStart(10) + (full.worst.toFixed(1) + ' ms').padStart(12),
     );
     out.textContent = lines.join('\n');
     await new Promise((r) => setTimeout(r, 60));
   }
+  lines.push('');
+  lines.push('naive/culled = mesma passada de terreno, mapa inteiro vs janela da camera.');
+  lines.push('draw() = renderer de producao (com culling, entidades e HUD). teto fps e pior frame vem dele.');
+  out.textContent = lines.join('\n');
   window.__fpsDone = out.textContent;
 };
 

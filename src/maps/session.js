@@ -51,8 +51,12 @@ export const createSession = ({ urlFor, texts = {}, setHint, onEnd, onEnterMap }
   };
 
   const enter = async (name, spawnAt) => {
-    remember();
+    // The main loop keeps updating the map being left while the next one
+    // loads. Freeze it first and snapshot it after the load, so damage taken
+    // or doors opened during the wait are not thrown away.
+    if (state.world) state.world.game.running = false;
     const { doc, baseUrl } = await loadDoc(name);
+    remember();
     const { level, parsed } = fromAseprite(doc, { ...(texts[name] ?? {}), spawnAt, baseUrl });
 
     const world = createGame({
@@ -74,7 +78,10 @@ export const createSession = ({ urlFor, texts = {}, setHint, onEnd, onEnterMap }
   };
 
   const restart = async (name, spawnAt, { keepProgress }) => {
-    if (!keepProgress) memories.clear();
+    // Snapshot before dropping the world: the map being restarted may hold
+    // doors opened since the last time it was left.
+    if (keepProgress) remember();
+    else memories.clear();
     state.world = null;
     state.name = null;
     state.hp = 3;

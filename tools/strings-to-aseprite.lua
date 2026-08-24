@@ -41,8 +41,15 @@ local SHEETS = {
   wall  = app.params["wallSheet"] or "public/assets/tiny-swords/terrain/tilemap-wall.png",
 }
 
+-- The raw XOR keeps its low bits in lockstep with x and y, so taking it
+-- modulo a small variant count walks 1,2,3,4,1,2,3,4 across a row. Mixing the
+-- high bits down first is what makes the choice look scattered.
 local function tileNoise(x, y)
-  return ((((x * 73856093) ~ (y * 19349663)) % 100) + 100) % 100
+  local h = (x * 73856093) ~ (y * 19349663) ~ 0x9e3779b9
+  h = (h ~ (h >> 33)) * 0xff51afd7ed558ccd
+  h = (h ~ (h >> 29)) * 0xc4ceb9fe1a85ec53
+  h = h ~ (h >> 32)
+  return (h % 100 + 100) % 100
 end
 
 local function paint(tileset, index, r, g, b, a)

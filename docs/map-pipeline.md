@@ -73,12 +73,6 @@ npm run map:verify    # prove the Aseprite overworld still matches src/levels.js
 the `.aseprite` files from the original string maps. Once you start editing maps
 in Aseprite, they become dead weight — delete them and keep `export-map.lua`.
 
-## Still missing
-
-The tiles are flat colour placeholders. `src/render.js` still draws the world as
-rectangles and ignores the tileset. Painting a real tileset and teaching the
-renderer to blit it is the next step.
-
 ## Tile size
 
 `TILE` lives in `src/levels.js` and is currently **64**, matching the Tiny
