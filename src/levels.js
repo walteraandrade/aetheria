@@ -1,4 +1,9 @@
-export const TILE = 32;
+export const TILE = 64;
+
+// The game's distances, speeds and hitboxes were all authored against a 32px
+// tile. SCALE keeps them proportional when the tile size changes, so switching
+// tile size stays a one-line edit instead of a hunt through every literal.
+export const SCALE = TILE / 32;
 
 // Map legend:
 //   #  solid wall

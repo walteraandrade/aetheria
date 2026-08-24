@@ -10,3 +10,5 @@
 - The files in this repository are a small renamed subset of the pack,
   included solely as part of this game. To obtain the full pack, download it
   from the source above.
+- `props/bell-tower.png` is a cropped detail of the pack's `Monastery.png`
+  (modification allowed by the license).
