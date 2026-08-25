@@ -1,5 +1,6 @@
 import { TILE } from './levels.js';
 import { sprites, decoSprites, drawSprite, drawDeco } from './sprites.js';
+import { drawTerrain } from './terrain.js';
 
 let heroFlip = false;
 let foeFlip = false;
@@ -20,20 +21,18 @@ export const draw = (ctx, world) => {
 
   ctx.save();
   ctx.translate(-camX, -camY);
-  ctx.fillStyle = '#17131f';
-  for (let r = 0; r < map.length; r++) {
-    for (let c = 0; c < map[0].length; c++) {
-      if ((r + c) % 2 === 0 && map[r][c] !== '#') ctx.fillRect(c * TILE, r * TILE, TILE, TILE);
+  if (!drawTerrain(ctx, level)) {
+    ctx.fillStyle = '#17131f';
+    for (let r = 0; r < map.length; r++) {
+      for (let c = 0; c < map[0].length; c++) {
+        if ((r + c) % 2 === 0 && map[r][c] !== '#') ctx.fillRect(c * TILE, r * TILE, TILE, TILE);
+      }
     }
   }
   ctx.globalAlpha = 0.72;
   world.deco.forEach((d) => drawDeco(ctx, decoSprites[d.key], d.x, d.y, d.size));
   ctx.globalAlpha = 1;
 
-  ctx.fillStyle = '#241f38';
-  solids.forEach((s) => ctx.fillRect(s.x, s.y, s.w, s.h));
-  ctx.fillStyle = '#2f2949';
-  solids.forEach((s) => ctx.fillRect(s.x, s.y, s.w, 6));
 
   doors.forEach((door) => {
     if (door.open) return;
@@ -60,11 +59,16 @@ export const draw = (ctx, world) => {
   game.enemies.forEach((e) => {
     if (e.dead) return;
     if (e.ring > 0) {
-      ctx.strokeStyle = e.state === 'sweep' ? 'rgba(224,180,92,0.9)' : 'rgba(208,90,90,0.8)';
-      ctx.lineWidth = 3;
+      const closing = e.state === 'sweep';
+      ctx.save();
+      ctx.strokeStyle = closing ? '#e0b45c' : '#d05a5a';
+      ctx.lineWidth = 5;
+      ctx.shadowColor = ctx.strokeStyle;
+      ctx.shadowBlur = 12;
       ctx.beginPath();
-      ctx.arc(e.x, e.y, Math.min(e.ring, 150), 0, Math.PI * 2);
+      ctx.arc(e.x, e.y, e.ring, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.restore();
     }
     const singing = e.state === 'sing';
     const now = performance.now() / 1000;
