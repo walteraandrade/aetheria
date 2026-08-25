@@ -13,7 +13,9 @@ const langSelect = document.getElementById('lang-select');
 const onEnd = (won) => {
   document.getElementById('end-title').textContent = won ? t('end.win') : t('end.lose');
   document.getElementById('end-text').textContent = won ? t('world.winText') : t('end.loseText');
-  document.getElementById('ov-end').classList.remove('hidden');
+  const end = document.getElementById('ov-end');
+  end.classList.toggle('lost', !won);
+  end.classList.remove('hidden');
 };
 
 const world = createGame({
