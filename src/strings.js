@@ -16,7 +16,7 @@ const STRINGS = {
     'world.startHint':
       'The temple sings to the west. The gate to the east waits for an answer. <strong>Space</strong> listens, <strong>X</strong> answers.',
     'world.winText':
-      'The thing beyond the gate falls silent. You reached it by ear — temple, gate, and the singing dark.',
+      'The thing beyond the gate falls silent. You reached it by ear — temple, gate, and a leap no bell in the field knew.',
 
     'end.win': 'The mist parts',
     'end.lose': 'The mist swallows you',
@@ -53,7 +53,7 @@ const STRINGS = {
     'world.startHint':
       'O templo canta a oeste. O portão a leste espera uma resposta. <strong>Espaço</strong> ouve, <strong>X</strong> responde.',
     'world.winText':
-      'A coisa além do portão se cala. Você chegou até ela pelo ouvido — templo, portão e o escuro que canta.',
+      'A coisa além do portão se cala. Você chegou até ela pelo ouvido — templo, portão e um salto que nenhum sino do campo conhecia.',
 
     'end.win': 'A névoa se abre',
     'end.lose': 'A névoa te engole',
