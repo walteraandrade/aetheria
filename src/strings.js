@@ -34,7 +34,6 @@ const STRINGS = {
 
     'hint.bossSings': 'It sings before it moves. Three leaps, three answers — your feet already know two of them.',
     'hint.hurtSweep': 'The closing ring catches you outside. That leap tells you to press in, not to flee.',
-    'hint.bossWakes': 'Something bigger breathes here, and it sings first.',
   },
 
   'pt-br': {
@@ -72,7 +71,6 @@ const STRINGS = {
 
     'hint.bossSings': 'Ela canta antes de se mexer. Três saltos, três respostas — seus pés já conhecem dois.',
     'hint.hurtSweep': 'O anel se fecha e te pega do lado de fora. Esse salto manda colar, não fugir.',
-    'hint.bossWakes': 'Algo maior respira aqui, e canta primeiro.',
   },
 };
 

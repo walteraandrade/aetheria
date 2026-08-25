@@ -8,7 +8,6 @@ const parseMap = (level) => {
   const bells = [];
   const doors = [];
   const enemySpawns = [];
-  let crystal = null;
   let playerSpawn = null;
   level.map.forEach((row, r) => {
     [...row].forEach((ch, c) => {
@@ -18,22 +17,49 @@ const parseMap = (level) => {
       if (level.doorPools && level.doorPools[ch]) {
         doors.push({ x, y, w: TILE, h: TILE, open: false, cooldown: 0, pool: level.doorPools[ch], interval: null, root: null });
       }
-      if (ch === 'C') crystal = { x: x + 16, y: y + 16 };
-      if (ch === 'E') enemySpawns.push({ x: x + 16, y: y + 16 });
+      if (ch === 'E') enemySpawns.push({ x: x + 16, y: y + 16, kind: 'grunt' });
+      if (ch === 'B') enemySpawns.push({ x: x + 16, y: y + 16, kind: 'boss' });
       if (ch === 'P') playerSpawn = { x: x + 16, y: y + 16 };
       if (ch >= '1' && ch <= '9') bells.push({ x: x + 16, y: y + 16, key: level.bellKeys[+ch - 1], cooldown: 0 });
     });
   });
-  return { solids, bells, doors, crystal, enemySpawns, playerSpawn };
+  return { solids, bells, doors, enemySpawns, playerSpawn };
 };
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+// Each attack is a sung interval and the move it announces. The interval is
+// the only tell: nothing on screen names it.
+//   dash  — a straight charge; step out of the line
+//   ring  — a blast that expands; get far
+//   sweep — a ring that closes in; press against the singer
+const KINDS = {
+  grunt: {
+    hp: 3, size: 22, speed: 40, aggro: 160, telegraph: 1.5, sprite: 92,
+    attacks: [
+      { move: 'dash', interval: 'p5' },
+      { move: 'ring', interval: 'm3' },
+    ],
+  },
+  boss: {
+    hp: 8, size: 30, speed: 55, aggro: 230, telegraph: 1.7, sprite: 132,
+    attacks: [
+      { move: 'dash', interval: 'p5' },
+      { move: 'ring', interval: 'm3' },
+      { move: 'sweep', interval: 'tritone' },
+    ],
+  },
+};
+
+const RING_RADIUS = 85;
+const SWEEP_RADIUS = 150;
+const SWEEP_SAFE = 62;
 
 const good = (text) => '<span class="good">' + text + '</span>';
 const bad = (text) => '<span class="bad">' + text + '</span>';
 
 export const createGame = ({ level, setHint, onEnd }) => {
-  const { solids, bells, doors, crystal, enemySpawns, playerSpawn } = parseMap(level);
+  const { solids, bells, doors, enemySpawns, playerSpawn } = parseMap(level);
 
   const game = {
     running: false,
@@ -44,16 +70,9 @@ export const createGame = ({ level, setHint, onEnd }) => {
     activeDoor: null,
     win: false,
     keys: {},
-    pulseCd: 0,
   };
 
   const pan = (x) => Math.max(-1, Math.min(1, (x - game.player.x) / 320));
-
-  const inDark = (x, y) => {
-    const tx = Math.floor(x / TILE);
-    const ty = Math.floor(y / TILE);
-    return (level.darkZones || []).some((z) => tx >= z.x0 && tx <= z.x1 && ty >= z.y0 && ty <= z.y1);
-  };
 
   const ripple = (x, y, color, max = 90) => game.ripples.push({ x, y, r: 8, max, color });
 
@@ -63,18 +82,21 @@ export const createGame = ({ level, setHint, onEnd }) => {
     return doors.some((d) => !d.open && hits(d));
   };
 
-  const spawnEnemy = (s) => ({
-    x: s.x, y: s.y, w: 22, h: 22, hp: 3, dead: false,
-    state: 'patrol', t: 0, dir: 1, attack: null, dx: 0, dy: 0, ring: 0, flash: 0,
-  });
+  const spawnEnemy = (s) => {
+    const kind = KINDS[s.kind];
+    return {
+      x: s.x, y: s.y, w: kind.size, h: kind.size, hp: kind.hp, hpMax: kind.hp,
+      kind: s.kind, boss: s.kind === 'boss', dead: false,
+      state: 'patrol', t: 0, dir: 1, attack: null, dx: 0, dy: 0, ring: 0, flash: 0,
+    };
+  };
 
   const resetRun = (keepDoors) => {
-    game.player = { x: playerSpawn.x, y: playerSpawn.y, w: 18, h: 18, hp: 3, inv: 0, fx: 1, fy: 0, sword: 0, swordCd: 0, stepT: 0 };
+    game.player = { x: playerSpawn.x, y: playerSpawn.y, w: 18, h: 18, hp: 3, inv: 0, fx: 1, fy: 0, sword: 0, swordCd: 0 };
     game.enemies = enemySpawns.map(spawnEnemy);
     game.ripples = [];
     game.win = false;
     game.activeDoor = null;
-    game.pulseCd = 0;
     bells.forEach((b) => { b.root = randomRoot(); });
     doors.forEach((d) => {
       if (!keepDoors) d.open = false;
@@ -152,11 +174,6 @@ export const createGame = ({ level, setHint, onEnd }) => {
       setHint(t('hint.doorSang'));
       return;
     }
-    if (inDark(game.player.x, game.player.y) && game.pulseCd <= 0) {
-      game.pulseCd = 1.2;
-      sfx.pulse();
-      ripple(game.player.x, game.player.y, '#e8e3d6', 170);
-    }
   };
 
   const swing = () => {
@@ -196,46 +213,60 @@ export const createGame = ({ level, setHint, onEnd }) => {
       if (e.hp <= 0) {
         e.dead = true;
         sfx.enemyDie(pan(e.x));
-        ripple(e.x, e.y, '#e0b45c', 130);
+        ripple(e.x, e.y, '#e0b45c', e.boss ? 220 : 130);
         setHint(good(t('hint.enemyDies')));
+        if (e.boss) endRun(true);
       }
     });
+  };
+
+  const telegraph = (e, kind) => {
+    e.attack = kind.attacks[Math.floor(Math.random() * kind.attacks.length)];
+    e.state = 'sing';
+    e.t = kind.telegraph;
+    singInterval(INTERVALS[e.attack.interval].semitones, randomRoot(), 'sawtooth', 0.14, pan(e.x));
+    ripple(e.x, e.y, '#d05a5a', e.boss ? 160 : 110);
+    setHint(t(e.boss ? 'hint.bossSings' : 'hint.enemySings'));
+  };
+
+  const strike = (e, d) => {
+    const p = game.player;
+    if (e.attack.move === 'dash') {
+      const dd = Math.max(1, d);
+      e.dx = (p.x - e.x) / dd;
+      e.dy = (p.y - e.y) / dd;
+      e.state = 'dash';
+      e.t = 0.55;
+      return;
+    }
+    if (e.attack.move === 'ring') {
+      e.state = 'ring';
+      e.t = 0.4;
+      e.ring = 0;
+      if (d < RING_RADIUS) hurtPlayer(t('hint.hurtRing'));
+      return;
+    }
+    e.state = 'sweep';
+    e.t = 0.4;
+    e.ring = SWEEP_RADIUS;
+    if (d > SWEEP_SAFE) hurtPlayer(t('hint.hurtSweep'));
   };
 
   const updateEnemy = (e, dt) => {
     const p = game.player;
     if (e.dead) return;
+    const kind = KINDS[e.kind];
     e.flash = Math.max(0, e.flash - dt);
     const d = dist(e, p);
 
     if (e.state === 'patrol') {
-      const ny = e.y + e.dir * 40 * dt;
+      const ny = e.y + e.dir * kind.speed * dt;
       if (!isSolid(e.x - e.w / 2, ny - e.h / 2, e.w, e.h)) e.y = ny;
       else e.dir = -e.dir;
-      if (d < 160) {
-        e.state = 'sing';
-        e.t = 1.5;
-        e.attack = Math.random() < 0.5 ? 'dash' : 'ring';
-        singInterval(e.attack === 'dash' ? 7 : 3, 55 + Math.floor(Math.random() * 12), 'sawtooth', 0.12, pan(e.x));
-        ripple(e.x, e.y, '#d05a5a', 110);
-        setHint(t('hint.enemySings'));
-      }
+      if (d < kind.aggro) telegraph(e, kind);
     } else if (e.state === 'sing') {
       e.t -= dt;
-      if (e.t <= 0) {
-        if (e.attack === 'dash') {
-          const dd = Math.max(1, d);
-          e.dx = (p.x - e.x) / dd;
-          e.dy = (p.y - e.y) / dd;
-          e.state = 'dash';
-          e.t = 0.55;
-        } else {
-          e.state = 'ring';
-          e.t = 0.4;
-          e.ring = 0;
-          if (d < 85) hurtPlayer(t('hint.hurtRing'));
-        }
-      }
+      if (e.t <= 0) strike(e, d);
     } else if (e.state === 'dash') {
       e.t -= dt;
       const nx = e.x + e.dx * 300 * dt;
@@ -247,12 +278,17 @@ export const createGame = ({ level, setHint, onEnd }) => {
       e.t -= dt;
       e.ring += 260 * dt;
       if (e.t <= 0) { e.state = 'recover'; e.t = 1.1; e.ring = 0; }
+    } else if (e.state === 'sweep') {
+      e.t -= dt;
+      e.ring = Math.max(0, e.ring - 300 * dt);
+      if (e.t <= 0) { e.state = 'recover'; e.t = 1.1; e.ring = 0; }
     } else if (e.state === 'recover') {
       e.t -= dt;
       if (e.t <= 0) e.state = 'patrol';
     }
 
-    if (e.state !== 'ring' && e.state !== 'sing' && !e.dead && d < 20) hurtPlayer(t('hint.hurtTouch'));
+    const idle = e.state === 'patrol' || e.state === 'recover';
+    if (idle && d < 20) hurtPlayer(t('hint.hurtTouch'));
   };
 
   const update = (dt) => {
@@ -263,7 +299,6 @@ export const createGame = ({ level, setHint, onEnd }) => {
     p.swordCd = Math.max(0, p.swordCd - dt);
     doors.forEach((d) => { d.cooldown = Math.max(0, d.cooldown - dt); });
     game.flash = Math.max(0, game.flash - dt);
-    game.pulseCd = Math.max(0, game.pulseCd - dt);
     bells.forEach((b) => { b.cooldown = Math.max(0, b.cooldown - dt); });
 
     let mx = 0;
@@ -280,14 +315,6 @@ export const createGame = ({ level, setHint, onEnd }) => {
       if (!isSolid(nx - p.w / 2, p.y - p.h / 2, p.w, p.h)) p.x = nx;
       const ny = p.y + (my / n) * 150 * dt;
       if (!isSolid(p.x - p.w / 2, ny - p.h / 2, p.w, p.h)) p.y = ny;
-      if (inDark(p.x, p.y)) {
-        p.stepT -= dt;
-        if (p.stepT <= 0) {
-          p.stepT = 0.35;
-          sfx.step();
-          ripple(p.x, p.y, '#5a7fd0', 70);
-        }
-      }
     }
 
     game.enemies.forEach((e) => updateEnemy(e, dt));
@@ -295,8 +322,7 @@ export const createGame = ({ level, setHint, onEnd }) => {
     game.ripples.forEach((r) => { r.r += 130 * dt; });
     game.ripples = game.ripples.filter((r) => r.r < r.max);
 
-    if (crystal && dist(p, crystal) < 22) endRun(true);
   };
 
-  return { game, level, solids, bells, doors, crystal, update, interact, swing, resetRun };
+  return { game, level, solids, bells, doors, update, interact, swing, resetRun };
 };

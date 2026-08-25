@@ -1,46 +1,13 @@
 import { TILE } from './levels.js';
 import { sprites, drawSprite } from './sprites.js';
 
-let darkCv = null;
-
-const drawDarkness = (ctx, world, camX, camY) => {
-  const { game, level } = world;
-  const cv = ctx.canvas;
-  if (!darkCv) darkCv = document.createElement('canvas');
-  if (darkCv.width !== cv.width || darkCv.height !== cv.height) {
-    darkCv.width = cv.width;
-    darkCv.height = cv.height;
-  }
-  const dctx = darkCv.getContext('2d');
-  dctx.globalCompositeOperation = 'source-over';
-  dctx.clearRect(0, 0, cv.width, cv.height);
-  dctx.fillStyle = 'rgba(4,3,10,0.97)';
-  level.darkZones.forEach((z) => {
-    dctx.fillRect(z.x0 * TILE - camX, z.y0 * TILE - camY, (z.x1 - z.x0 + 1) * TILE, (z.y1 - z.y0 + 1) * TILE);
-  });
-  dctx.globalCompositeOperation = 'destination-out';
-  const hole = (x, y, r, a) => {
-    const grad = dctx.createRadialGradient(x, y, 0, x, y, r);
-    grad.addColorStop(0, 'rgba(0,0,0,' + a + ')');
-    grad.addColorStop(0.7, 'rgba(0,0,0,' + a * 0.7 + ')');
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    dctx.fillStyle = grad;
-    dctx.beginPath();
-    dctx.arc(x, y, r, 0, Math.PI * 2);
-    dctx.fill();
-  };
-  hole(game.player.x - camX, game.player.y - camY, 46, 0.95);
-  game.ripples.forEach((r) => hole(r.x - camX, r.y - camY, r.r, Math.max(0, 1 - r.r / r.max)));
-  ctx.drawImage(darkCv, 0, 0);
-};
-
 let heroFlip = false;
 let foeFlip = false;
 let prevPX = 0;
 let prevPY = 0;
 
 export const draw = (ctx, world) => {
-  const { game, level, solids, bells, doors, crystal } = world;
+  const { game, level, solids, bells, doors } = world;
   const map = level.map;
   const cv = ctx.canvas;
   const mapW = map[0].length * TILE;
@@ -88,23 +55,25 @@ export const draw = (ctx, world) => {
 
   game.enemies.forEach((e) => {
     if (e.dead) return;
-    if (e.state === 'ring' && e.ring > 0) {
-      ctx.strokeStyle = 'rgba(208,90,90,0.8)';
+    if (e.ring > 0) {
+      ctx.strokeStyle = e.state === 'sweep' ? 'rgba(224,180,92,0.9)' : 'rgba(208,90,90,0.8)';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(e.x, e.y, Math.min(e.ring, 85), 0, Math.PI * 2);
+      ctx.arc(e.x, e.y, Math.min(e.ring, 150), 0, Math.PI * 2);
       ctx.stroke();
     }
     const singing = e.state === 'sing';
     const now = performance.now() / 1000;
     if (e.state === 'dash') foeFlip = e.dx < 0;
     else foeFlip = game.player.x < e.x;
+    const striking = e.state === 'ring' || e.state === 'sweep';
     const foeSheet = e.state === 'dash' || e.state === 'patrol' ? sprites.foeRun
-      : e.state === 'ring' ? sprites.foeAttack
+      : striking ? sprites.foeAttack
       : sprites.foeIdle;
-    const foeOpts = e.state === 'ring'
-      ? { t: 0.4 - e.t, fps: 10, once: true, flip: foeFlip, size: 92 }
-      : { t: now, flip: foeFlip, size: 92 };
+    const size = e.boss ? 132 : 92;
+    const foeOpts = striking
+      ? { t: 0.4 - e.t, fps: 10, once: true, flip: foeFlip, size }
+      : { t: now, flip: foeFlip, size };
     const hitFlicker = e.flash > 0 && Math.floor(e.flash * 20) % 2 === 0;
     const foeDrawn = hitFlicker || drawSprite(ctx, foeSheet, e.x, e.y - 8, foeOpts);
     if (!foeDrawn) {
@@ -112,34 +81,32 @@ export const draw = (ctx, world) => {
       ctx.save();
       ctx.translate(e.x, e.y);
       ctx.rotate(Math.PI / 4);
-      ctx.fillRect(-11, -11, 22, 22);
+      ctx.fillRect(-e.w / 2, -e.h / 2, e.w, e.h);
       ctx.restore();
       ctx.fillStyle = '#0f0c18';
       ctx.fillRect(e.x - 5, e.y - 3, 3, 3);
       ctx.fillRect(e.x + 2, e.y - 3, 3, 3);
     }
-    for (let i = 0; i < e.hp; i++) {
+    const barY = e.y - (e.boss ? 52 : 34);
+    if (e.boss) {
+      const barW = 72;
+      ctx.fillStyle = '#2a2440';
+      ctx.fillRect(e.x - barW / 2, barY, barW, 5);
       ctx.fillStyle = '#d05a5a';
-      ctx.fillRect(e.x - 12 + i * 9, e.y - 34, 6, 4);
+      ctx.fillRect(e.x - barW / 2, barY, (barW * e.hp) / e.hpMax, 5);
+    } else {
+      for (let i = 0; i < e.hp; i++) {
+        ctx.fillStyle = '#d05a5a';
+        ctx.fillRect(e.x - 12 + i * 9, barY, 6, 4);
+      }
     }
     if (singing) {
       ctx.fillStyle = '#e8e3d6';
       ctx.font = '12px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('♪♪', e.x, e.y - 40);
+      ctx.fillText('♪♪', e.x, barY - 8);
     }
   });
-
-  if (crystal) {
-    const pulse = 1 + 0.15 * Math.sin(performance.now() / 300);
-    ctx.fillStyle = '#7cc48a';
-    ctx.save();
-    ctx.translate(crystal.x, crystal.y);
-    ctx.rotate(Math.PI / 4);
-    const cs = 9 * pulse;
-    ctx.fillRect(-cs, -cs, cs * 2, cs * 2);
-    ctx.restore();
-  }
 
   const p = game.player;
   const moving = Math.hypot(p.x - prevPX, p.y - prevPY) > 0.1;
@@ -182,8 +149,6 @@ export const draw = (ctx, world) => {
   });
 
   ctx.restore();
-
-  if (level.darkZones && level.darkZones.length) drawDarkness(ctx, world, camX, camY);
 
   for (let i = 0; i < 3; i++) {
     ctx.fillStyle = i < p.hp ? '#d05a5a' : '#2a2440';
