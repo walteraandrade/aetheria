@@ -52,8 +52,12 @@ const KINDS = {
   },
 };
 
-const RING_RADIUS = 85;
-const SWEEP_RADIUS = 150;
+// Both area attacks land when their ring reaches the player, never before, and
+// never outside the ring the player can see. The sung interval says which one
+// is coming; the ring says it arrived.
+const BLAST_TIME = 0.45;
+const RING_RADIUS = 95;
+const SWEEP_RADIUS = 230;
 const SWEEP_SAFE = 62;
 
 const good = (text) => '<span class="good">' + text + '</span>';
@@ -243,15 +247,13 @@ export const createGame = ({ level, setHint, onEnd }) => {
     }
     if (e.attack.move === 'ring') {
       e.state = 'ring';
-      e.t = 0.4;
+      e.t = BLAST_TIME;
       e.ring = 0;
-      if (d < RING_RADIUS) hurtPlayer(t('hint.hurtRing'));
       return;
     }
     e.state = 'sweep';
-    e.t = 0.4;
+    e.t = BLAST_TIME;
     e.ring = SWEEP_RADIUS;
-    if (d > SWEEP_SAFE) hurtPlayer(t('hint.hurtSweep'));
   };
 
   const updateEnemy = (e, dt) => {
@@ -278,12 +280,22 @@ export const createGame = ({ level, setHint, onEnd }) => {
       if (e.t <= 0) { e.state = 'recover'; e.t = 1.1; }
     } else if (e.state === 'ring') {
       e.t -= dt;
-      e.ring += 260 * dt;
-      if (e.t <= 0) { e.state = 'recover'; e.t = 1.1; e.ring = 0; }
+      e.ring = RING_RADIUS * (1 - e.t / BLAST_TIME);
+      if (e.t <= 0) {
+        if (d <= RING_RADIUS) hurtPlayer(t('hint.hurtRing'));
+        e.state = 'recover';
+        e.t = 1.1;
+        e.ring = 0;
+      }
     } else if (e.state === 'sweep') {
       e.t -= dt;
-      e.ring = Math.max(0, e.ring - 300 * dt);
-      if (e.t <= 0) { e.state = 'recover'; e.t = 1.1; e.ring = 0; }
+      e.ring = SWEEP_SAFE + (SWEEP_RADIUS - SWEEP_SAFE) * (e.t / BLAST_TIME);
+      if (e.t <= 0) {
+        if (d > SWEEP_SAFE && d <= SWEEP_RADIUS) hurtPlayer(t('hint.hurtSweep'));
+        e.state = 'recover';
+        e.t = 1.1;
+        e.ring = 0;
+      }
     } else if (e.state === 'recover') {
       e.t -= dt;
       if (e.t <= 0) e.state = 'patrol';

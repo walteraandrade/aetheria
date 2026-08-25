@@ -18,6 +18,9 @@
 > each announced by a different sung interval and answered spatially:
 > p5 → charge (leave the line), m3 → expanding blast (get far),
 > tritone → closing ring (press in against the singer). Killing it wins the run.
+> Both area attacks land **when their ring reaches the player and only inside
+> that ring** — an off-screen hit the player cannot see is a bug, not a
+> difficulty knob.
 > Footstep and shout ripples went out with the darkness — they only existed to
 > light it. L3 (Echo Maze) and L5 (Tritone Tower) below are historical design
 > notes, not the shipped v1.0.
@@ -161,3 +164,8 @@ playing the build start to finish; none of them are code defects.
    means crossing the whole field twice, past the roaming enemy, on 3 HP.
 4. **Enemies respawn on retry but doors stay open.** Correct as designed, but it
    means the grunt must be re-cleared on every attempt at the boss.
+
+Fixed on 2026-08-25 after the first play report: the boss's tritone sweep had
+no outer bound, so it damaged the player at any distance while its ring was
+only ever drawn out to 150px — you were hit by something you could not see.
+Both blasts now resolve on impact, inside their drawn radius.
