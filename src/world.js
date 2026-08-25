@@ -1,6 +1,7 @@
 import { singInterval, sfx } from './audio.js';
 import { INTERVALS, randomRoot } from './intervals.js';
 import { TILE } from './levels.js';
+import { t } from './strings.js';
 
 const parseMap = (level) => {
   const solids = [];
@@ -27,6 +28,9 @@ const parseMap = (level) => {
 };
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+const good = (text) => '<span class="good">' + text + '</span>';
+const bad = (text) => '<span class="bad">' + text + '</span>';
 
 export const createGame = ({ level, setHint, onEnd }) => {
   const { solids, bells, doors, crystal, enemySpawns, playerSpawn } = parseMap(level);
@@ -79,7 +83,7 @@ export const createGame = ({ level, setHint, onEnd }) => {
         d.root = randomRoot();
       }
     });
-    setHint(level.startHint);
+    setHint(t('world.startHint'));
   };
 
   const nearestBell = () => {
@@ -123,7 +127,7 @@ export const createGame = ({ level, setHint, onEnd }) => {
     p.inv = 1;
     game.flash = 0.25;
     sfx.hurt();
-    if (msg) setHint('<span class="bad">' + msg + '</span>');
+    if (msg) setHint(bad(msg));
     if (p.hp <= 0) endRun(false);
   };
 
@@ -139,13 +143,13 @@ export const createGame = ({ level, setHint, onEnd }) => {
     const bell = nearestBell();
     if (bell) {
       ringBell(bell);
-      setHint('O sino canta e o mundo inteiro escuta. <strong>X</strong> golpeia, se ele responde a alguma porta.');
+      setHint(t('hint.bellRung'));
       return;
     }
     const door = nearestClosedDoor(44);
     if (door) {
       doorSing(door, false);
-      setHint('A porta cantou. Guarde o salto no ouvido: o sino que responde pode estar longe.');
+      setHint(t('hint.doorSang'));
       return;
     }
     if (inDark(game.player.x, game.player.y) && game.pulseCd <= 0) {
@@ -174,9 +178,9 @@ export const createGame = ({ level, setHint, onEnd }) => {
         target.open = true;
         sfx.doorOpen(pan(target.x + 16));
         ripple(target.x + 16, target.y + 16, '#7cc48a', 140);
-        setHint('<span class="good">O sino responde e uma porta se desfaz, onde quer que ela cante.</span>');
+        setHint(good(t('hint.doorOpened')));
       } else {
-        hurtPlayer('O sino errado morde sua mão. A porta canta de novo — compare com calma.');
+        hurtPlayer(t('hint.wrongBell'));
         setTimeout(() => doorSing(target, true), 600);
       }
       return;
@@ -193,7 +197,7 @@ export const createGame = ({ level, setHint, onEnd }) => {
         e.dead = true;
         sfx.enemyDie(pan(e.x));
         ripple(e.x, e.y, '#e0b45c', 130);
-        setHint('<span class="good">A criatura se desfaz em névoa.</span>');
+        setHint(good(t('hint.enemyDies')));
       }
     });
   };
@@ -214,7 +218,7 @@ export const createGame = ({ level, setHint, onEnd }) => {
         e.attack = Math.random() < 0.5 ? 'dash' : 'ring';
         singInterval(e.attack === 'dash' ? 7 : 3, 55 + Math.floor(Math.random() * 12), 'sawtooth', 0.12, pan(e.x));
         ripple(e.x, e.y, '#d05a5a', 110);
-        setHint('Ela canta. <strong>Quinta justa</strong>: investida — saia da linha. <strong>Terça menor</strong>: explosão — afaste-se.');
+        setHint(t('hint.enemySings'));
       }
     } else if (e.state === 'sing') {
       e.t -= dt;
@@ -229,7 +233,7 @@ export const createGame = ({ level, setHint, onEnd }) => {
           e.state = 'ring';
           e.t = 0.4;
           e.ring = 0;
-          if (d < 85) hurtPlayer('A explosão te alcança. Terça menor manda correr para longe.');
+          if (d < 85) hurtPlayer(t('hint.hurtRing'));
         }
       }
     } else if (e.state === 'dash') {
@@ -237,7 +241,7 @@ export const createGame = ({ level, setHint, onEnd }) => {
       const nx = e.x + e.dx * 300 * dt;
       const ny = e.y + e.dy * 300 * dt;
       if (!isSolid(nx - e.w / 2, ny - e.h / 2, e.w, e.h)) { e.x = nx; e.y = ny; } else e.t = 0;
-      if (d < 24) hurtPlayer('A investida te acerta. Quinta justa manda sair da linha.');
+      if (d < 24) hurtPlayer(t('hint.hurtDash'));
       if (e.t <= 0) { e.state = 'recover'; e.t = 1.1; }
     } else if (e.state === 'ring') {
       e.t -= dt;
@@ -248,7 +252,7 @@ export const createGame = ({ level, setHint, onEnd }) => {
       if (e.t <= 0) e.state = 'patrol';
     }
 
-    if (e.state !== 'ring' && e.state !== 'sing' && !e.dead && d < 20) hurtPlayer('Encostar nela queima.');
+    if (e.state !== 'ring' && e.state !== 'sing' && !e.dead && d < 20) hurtPlayer(t('hint.hurtTouch'));
   };
 
   const update = (dt) => {

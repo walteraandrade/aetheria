@@ -2,17 +2,17 @@ import { ensureAudio } from './audio.js';
 import { createGame } from './world.js';
 import { draw } from './render.js';
 import { WORLD } from './levels.js';
+import { LOCALES, getLocale, setLocale, t } from './strings.js';
 
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 const hintEl = document.getElementById('hint');
 const btnAgain = document.getElementById('btn-again');
+const langSelect = document.getElementById('lang-select');
 
 const onEnd = (won) => {
-  document.getElementById('end-title').textContent = won ? 'A névoa se abre' : 'A névoa te engole';
-  document.getElementById('end-text').textContent = won
-    ? WORLD.winText
-    : 'Seu corpo caiu, mas o ouvido fica. As portas que você já abriu continuam abertas.';
+  document.getElementById('end-title').textContent = won ? t('end.win') : t('end.lose');
+  document.getElementById('end-text').textContent = won ? t('world.winText') : t('end.loseText');
   document.getElementById('ov-end').classList.remove('hidden');
 };
 
@@ -21,10 +21,34 @@ const world = createGame({
   setHint: (html) => { hintEl.innerHTML = html; },
   onEnd,
 });
-world.resetRun(false);
 
-document.getElementById('start-title').textContent = WORLD.title;
-document.getElementById('start-text').innerHTML = WORLD.intro;
+const applyLocale = () => {
+  document.documentElement.lang = t('lang.tag');
+  document.title = t('ui.title');
+  document.getElementById('subtitle').textContent = t('ui.subtitle');
+  document.getElementById('controls').innerHTML = t('ui.controls');
+  document.getElementById('lang-label').textContent = t('ui.language');
+  document.getElementById('btn-start').textContent = t('ui.start');
+  btnAgain.textContent = t('ui.again');
+  document.getElementById('start-title').textContent = t('world.title');
+  document.getElementById('start-text').innerHTML = t('world.intro');
+  if (!world.game.running) hintEl.innerHTML = t('world.startHint');
+};
+
+LOCALES.forEach((locale) => {
+  const opt = document.createElement('option');
+  opt.value = locale;
+  opt.textContent = locale;
+  langSelect.appendChild(opt);
+});
+langSelect.value = getLocale();
+langSelect.addEventListener('change', () => {
+  setLocale(langSelect.value);
+  applyLocale();
+});
+
+world.resetRun(false);
+applyLocale();
 
 document.addEventListener('keydown', (e) => {
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();

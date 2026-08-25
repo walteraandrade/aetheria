@@ -16,13 +16,6 @@ export const TILE = 32;
 
 export const WORLD = {
   id: 'overworld',
-  title: 'Aetheria',
-  intro:
-    'Um mundo só, e ele fala em intervalos. A oeste, o <strong>templo</strong> guarda sinos e uma porta ' +
-    'que canta. A leste, um portão canta um salto que nenhum sino do campo conhece — a chave é um ' +
-    '<strong>som</strong>, e sons se encontram explorando. No <strong>bosque escuro</strong>, a luz morre: ' +
-    'seus passos e seu grito (<strong>Espaço</strong>) acendem o mundo por um instante.',
-  startHint: 'O templo canta a oeste. O portão a leste espera uma resposta. <strong>Espaço</strong> ouve, <strong>X</strong> responde.',
   bellKeys: ['p5', 'm3', 'p8', 'M3'],
   doorPools: {
     D: ['p5', 'm3', 'p8'],
@@ -54,5 +47,4 @@ export const WORLD = {
     '####################....................#....#....#........#',
     '############################################################',
   ],
-  winText: 'O coração do bosque para de se esconder. Você chegou até ele pelo ouvido — templo, portão e escuro.',
 };

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,23 +10,27 @@
   <div class="stage">
     <header>
       <h1>AETHERIA</h1>
-      <div class="subtitle">a névoa fala em intervalos</div>
+      <div class="subtitle" id="subtitle"></div>
     </header>
     <div class="frame">
       <canvas id="cv" width="640" height="352"></canvas>
       <div class="overlay" id="ov-start">
         <h2 id="start-title"></h2>
         <p id="start-text"></p>
-        <button id="btn-start">Acender a tocha</button>
+        <button id="btn-start"></button>
       </div>
       <div class="overlay hidden" id="ov-end">
         <h2 id="end-title"></h2>
         <p id="end-text"></p>
-        <button id="btn-again">Voltar à névoa</button>
+        <button id="btn-again"></button>
       </div>
     </div>
     <div class="hint" id="hint"></div>
-    <div class="controls">setas / wasd mover &middot; espaço ouvir &middot; x espada</div>
+    <div class="controls" id="controls"></div>
+    <div class="lang">
+      <label for="lang-select" id="lang-label"></label>
+      <select id="lang-select"></select>
+    </div>
   </div>
   <script type="module" src="/src/main.js"></script>
 </body>

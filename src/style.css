@@ -56,9 +56,6 @@ canvas {
 }
 .hint {
   min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   text-align: center;
   font-size: 0.82rem;
   line-height: 1.5;
@@ -105,3 +102,22 @@ button {
 button:hover { background: #2a2312; }
 button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .hidden { display: none !important; }
+.lang {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--ink-dim);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.lang select {
+  font-family: var(--font-ui);
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 3px 6px;
+  font-size: 0.68rem;
+}
