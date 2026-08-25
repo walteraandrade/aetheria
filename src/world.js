@@ -2,6 +2,7 @@ import { singInterval, sfx } from './audio.js';
 import { INTERVALS, randomRoot } from './intervals.js';
 import { TILE } from './levels.js';
 import { t } from './strings.js';
+import { buildDeco } from './deco.js';
 
 const parseMap = (level) => {
   const solids = [];
@@ -60,6 +61,7 @@ const bad = (text) => '<span class="bad">' + text + '</span>';
 
 export const createGame = ({ level, setHint, onEnd }) => {
   const { solids, bells, doors, enemySpawns, playerSpawn } = parseMap(level);
+  const deco = buildDeco(level);
 
   const game = {
     running: false,
@@ -324,5 +326,5 @@ export const createGame = ({ level, setHint, onEnd }) => {
 
   };
 
-  return { game, level, solids, bells, doors, update, interact, swing, resetRun };
+  return { game, level, solids, bells, doors, deco, update, interact, swing, resetRun };
 };

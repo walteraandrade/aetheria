@@ -8,6 +8,8 @@
   - `ui/` — `panel.png` (Banners/Carved_9Slides), `ribbon.png`
     (Ribbons/Ribbon_Yellow_3Slides), `button-blue*.png` / `button-red*.png`
     (Buttons/Button_{Blue,Red}_3Slides), used for the start and end screens.
+  - `deco/` — a subset of `Deco/` props (mushrooms, rocks, bushes, bones,
+    totems), scattered as non-solid scenery.
 - License (as stated on the itch.io page): free for personal and commercial
   projects, modification allowed, credit optional. Redistribution, resale, or
   repackaging of the asset pack itself is not permitted.

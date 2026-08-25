@@ -1,5 +1,5 @@
 import { TILE } from './levels.js';
-import { sprites, drawSprite } from './sprites.js';
+import { sprites, decoSprites, drawSprite, drawDeco } from './sprites.js';
 
 let heroFlip = false;
 let foeFlip = false;
@@ -26,6 +26,10 @@ export const draw = (ctx, world) => {
       if ((r + c) % 2 === 0 && map[r][c] !== '#') ctx.fillRect(c * TILE, r * TILE, TILE, TILE);
     }
   }
+  ctx.globalAlpha = 0.72;
+  world.deco.forEach((d) => drawDeco(ctx, decoSprites[d.key], d.x, d.y, d.size));
+  ctx.globalAlpha = 1;
+
   ctx.fillStyle = '#241f38';
   solids.forEach((s) => ctx.fillRect(s.x, s.y, s.w, s.h));
   ctx.fillStyle = '#2f2949';
