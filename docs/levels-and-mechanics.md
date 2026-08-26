@@ -150,8 +150,11 @@ are in the code.
 
 ## 7. Next session — found while playing v1.0
 
-Ordered by how much they block a first-time player. Found on 2026-08-25 by
-playing the build start to finish; none of them are code defects.
+Ordered by how much they block a first-time player. Found on 2026-08-25; none
+of them are code defects. The run *is* completable start to finish — Walter
+played it through and killed the boss the same day. The notes below come from
+a session that never got past the roaming enemy, so read them as friction a
+player can absorb, not as walls.
 
 1. **Contact damage is the real killer.** Standing next to an enemy costs 1 HP
    per second (`patrol`/`recover` states), the sword reaches ~50px, and there
