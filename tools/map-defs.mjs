@@ -25,7 +25,6 @@ const house = {
   tile: TILE,
   bellKeys: ['p8'],
   doorPools: {},
-  darkZones: [],
   map: [
     '###############',
     '#.............#',

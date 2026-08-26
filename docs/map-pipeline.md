@@ -40,13 +40,13 @@ slice instead.
 | kind | properties | notes |
 |---|---|---|
 | `player` | — | starting position; interiors don't need one |
-| `crystal` | — | the goal |
-| `enemy` | — | spawn point |
+| `crystal` | — | a goal you reach by touching it |
+| `enemy` | — | grunt spawn point: 3 HP, charge and blast |
+| `boss` | — | boss spawn point: 8 HP, adds the closing-ring attack; killing it wins the run |
 | `bell` | `interval` | key into `INTERVALS` (`p5`, `m3`, `p8`, `M3`, …) |
 | `door` | `pool` | comma-separated intervals the door may sing, e.g. `p5,m3,p8` |
 | `portal` | `to`, `spawn`, `id` | `to` = map name, `spawn` = arrival point there, `id` = names *this* spot as an arrival point |
 | `spawn` | `id` | a bare arrival point |
-| `dark` | — | slice only; its rectangle becomes a dark zone |
 
 A portal carrying an `id` is both an exit and an arrival point, so one tile can
 be the door you leave by and the spot you land on coming back.

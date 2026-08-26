@@ -1,45 +1,70 @@
 import { ensureAudio } from './audio.js';
 import { draw } from './render.js';
-import { WORLD } from './levels.js';
 import { createSession } from './maps/session.js';
+import { LOCALES, getLocale, setLocale, t } from './strings.js';
 
 const START_MAP = 'overworld';
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 const hintEl = document.getElementById('hint');
 const btnAgain = document.getElementById('btn-again');
+const langSelect = document.getElementById('lang-select');
 
-const TEXTS = {
-  overworld: {
-    title: WORLD.title,
-    intro: WORLD.intro,
-    startHint: WORLD.startHint,
-    winText: WORLD.winText,
-  },
-  house: {
-    title: 'Uma casa',
-    startHint: 'Um sino mora aqui. Saia pela porta por onde entrou.',
-  },
-};
+// Read at map-load time rather than captured once, so switching language and
+// walking into a house gets the house's copy in the new language.
+const textsFor = (name) => (name === START_MAP
+  ? {
+    title: t('world.title'),
+    intro: t('world.intro'),
+    startHint: t('world.startHint'),
+    winText: t('world.winText'),
+  }
+  : {
+    title: t(name + '.title'),
+    startHint: t(name + '.startHint'),
+  });
 
 const onEnd = (won) => {
-  const level = session.state.world?.level;
-  document.getElementById('end-title').textContent = won ? 'A névoa se abre' : 'A névoa te engole';
-  document.getElementById('end-text').textContent = won
-    ? (level?.winText || WORLD.winText)
-    : 'Seu corpo caiu, mas o ouvido fica. As portas que você já abriu continuam abertas.';
-  document.getElementById('ov-end').classList.remove('hidden');
+  document.getElementById('end-title').textContent = won ? t('end.win') : t('end.lose');
+  document.getElementById('end-text').textContent = won ? t('world.winText') : t('end.loseText');
+  const end = document.getElementById('ov-end');
+  end.classList.toggle('lost', !won);
+  end.classList.remove('hidden');
 };
 
 const session = createSession({
   urlFor: (name) => `/maps/${name}.json`,
-  texts: TEXTS,
+  textsFor,
   setHint: (html) => { hintEl.innerHTML = html; },
   onEnd,
 });
 
-document.getElementById('start-title').textContent = WORLD.title;
-document.getElementById('start-text').innerHTML = WORLD.intro;
+const applyLocale = () => {
+  document.documentElement.lang = t('lang.tag');
+  document.title = t('ui.title');
+  document.getElementById('subtitle').textContent = t('ui.subtitle');
+  document.getElementById('controls').innerHTML = t('ui.controls');
+  document.getElementById('lang-label').textContent = t('ui.language');
+  document.getElementById('btn-start').textContent = t('ui.start');
+  btnAgain.textContent = t('ui.again');
+  document.getElementById('start-title').textContent = t('world.title');
+  document.getElementById('start-text').innerHTML = t('world.intro');
+  if (!session.state.world?.game.running) hintEl.innerHTML = t('world.startHint');
+};
+
+LOCALES.forEach((locale) => {
+  const opt = document.createElement('option');
+  opt.value = locale;
+  opt.textContent = locale;
+  langSelect.appendChild(opt);
+});
+langSelect.value = getLocale();
+langSelect.addEventListener('change', () => {
+  setLocale(langSelect.value);
+  applyLocale();
+});
+
+applyLocale();
 
 document.addEventListener('keydown', (e) => {
   const world = session.state.world;

@@ -1,41 +1,8 @@
 import { TILE, SCALE as S } from './levels.js';
-
-const HALF = TILE / 2;
-import { sprites, drawSprite } from './sprites.js';
+import { sprites, decoSprites, drawSprite, drawDeco } from './sprites.js';
 import { tileset } from './tileset.js';
 
-let darkCv = null;
-
-const drawDarkness = (ctx, world, camX, camY) => {
-  const { game, level } = world;
-  const cv = ctx.canvas;
-  if (!darkCv) darkCv = document.createElement('canvas');
-  if (darkCv.width !== cv.width || darkCv.height !== cv.height) {
-    darkCv.width = cv.width;
-    darkCv.height = cv.height;
-  }
-  const dctx = darkCv.getContext('2d');
-  dctx.globalCompositeOperation = 'source-over';
-  dctx.clearRect(0, 0, cv.width, cv.height);
-  dctx.fillStyle = 'rgba(4,3,10,0.97)';
-  level.darkZones.forEach((z) => {
-    dctx.fillRect(z.x0 * TILE - camX, z.y0 * TILE - camY, (z.x1 - z.x0 + 1) * TILE, (z.y1 - z.y0 + 1) * TILE);
-  });
-  dctx.globalCompositeOperation = 'destination-out';
-  const hole = (x, y, r, a) => {
-    const grad = dctx.createRadialGradient(x, y, 0, x, y, r);
-    grad.addColorStop(0, 'rgba(0,0,0,' + a + ')');
-    grad.addColorStop(0.7, 'rgba(0,0,0,' + a * 0.7 + ')');
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    dctx.fillStyle = grad;
-    dctx.beginPath();
-    dctx.arc(x, y, r, 0, Math.PI * 2);
-    dctx.fill();
-  };
-  hole(game.player.x - camX, game.player.y - camY, 46 * S, 0.95);
-  game.ripples.forEach((r) => hole(r.x - camX, r.y - camY, r.r, Math.max(0, 1 - r.r / r.max)));
-  ctx.drawImage(darkCv, 0, 0);
-};
+const HALF = TILE / 2;
 
 // Only the tiles the camera can see get drawn. Without this the cost of a
 // frame grows with the whole map instead of the window onto it.
@@ -94,7 +61,7 @@ let prevPX = 0;
 let prevPY = 0;
 
 export const draw = (ctx, world) => {
-  const { game, level, bells, doors, crystal } = world;
+  const { game, level, bells, doors, crystal, deco } = world;
   const map = level.map;
   const cv = ctx.canvas;
   const mapW = map[0].length * TILE;
@@ -113,6 +80,11 @@ export const draw = (ctx, world) => {
   ctx.translate(-camX, -camY);
   const drewTiles = level.layers?.length ? drawLayers(ctx, level, camX, camY) : false;
   if (!drewTiles) drawFlat(ctx, level, camX, camY);
+
+  // Props sit on the ground and under everything the player has to read.
+  ctx.globalAlpha = 0.72;
+  deco.forEach((d) => drawDeco(ctx, decoSprites[d.key], d.x, d.y, d.size));
+  ctx.globalAlpha = 1;
 
   doors.forEach((door) => {
     if (door.open) return;
@@ -138,23 +110,32 @@ export const draw = (ctx, world) => {
 
   game.enemies.forEach((e) => {
     if (e.dead) return;
-    if (e.state === 'ring' && e.ring > 0) {
-      ctx.strokeStyle = 'rgba(208,90,90,0.8)';
-      ctx.lineWidth = 3 * S;
+    // The ring is the attack's hitbox made visible: world.js hurts the player
+    // at exactly this radius, so drawing anything else here would lie.
+    if (e.ring > 0) {
+      const closing = e.state === 'sweep';
+      ctx.save();
+      ctx.strokeStyle = closing ? '#e0b45c' : '#d05a5a';
+      ctx.lineWidth = 5 * S;
+      ctx.shadowColor = ctx.strokeStyle;
+      ctx.shadowBlur = 12 * S;
       ctx.beginPath();
-      ctx.arc(e.x, e.y, Math.min(e.ring, 85 * S), 0, Math.PI * 2);
+      ctx.arc(e.x, e.y, e.ring, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.restore();
     }
     const singing = e.state === 'sing';
     const now = performance.now() / 1000;
     if (e.state === 'dash') foeFlip = e.dx < 0;
     else foeFlip = game.player.x < e.x;
+    const striking = e.state === 'ring' || e.state === 'sweep';
     const foeSheet = e.state === 'dash' || e.state === 'patrol' ? sprites.foeRun
-      : e.state === 'ring' ? sprites.foeAttack
+      : striking ? sprites.foeAttack
       : sprites.foeIdle;
-    const foeOpts = e.state === 'ring'
-      ? { t: 0.4 - e.t, fps: 10, once: true, flip: foeFlip, size: 92 * S }
-      : { t: now, flip: foeFlip, size: 92 * S };
+    const size = (e.boss ? 132 : 92) * S;
+    const foeOpts = striking
+      ? { t: 0.4 - e.t, fps: 10, once: true, flip: foeFlip, size }
+      : { t: now, flip: foeFlip, size };
     const hitFlicker = e.flash > 0 && Math.floor(e.flash * 20) % 2 === 0;
     const foeDrawn = hitFlicker || drawSprite(ctx, foeSheet, e.x, e.y - 8 * S, foeOpts);
     if (!foeDrawn) {
@@ -162,21 +143,31 @@ export const draw = (ctx, world) => {
       ctx.save();
       ctx.translate(e.x, e.y);
       ctx.rotate(Math.PI / 4);
-      ctx.fillRect(-11 * S, -11 * S, 22 * S, 22 * S);
+      ctx.fillRect(-e.w / 2, -e.h / 2, e.w, e.h);
       ctx.restore();
       ctx.fillStyle = '#0f0c18';
       ctx.fillRect(e.x - 5 * S, e.y - 3 * S, 3 * S, 3 * S);
       ctx.fillRect(e.x + 2 * S, e.y - 3 * S, 3 * S, 3 * S);
     }
-    for (let i = 0; i < e.hp; i++) {
+    // 8 HP does not read as eight pips, so the boss gets a bar instead.
+    const barY = e.y - (e.boss ? 52 : 34) * S;
+    if (e.boss) {
+      const barW = 72 * S;
+      ctx.fillStyle = '#2a2440';
+      ctx.fillRect(e.x - barW / 2, barY, barW, 5 * S);
       ctx.fillStyle = '#d05a5a';
-      ctx.fillRect(e.x - (12 - i * 9) * S, e.y - 34 * S, 6 * S, 4 * S);
+      ctx.fillRect(e.x - barW / 2, barY, (barW * e.hp) / e.hpMax, 5 * S);
+    } else {
+      for (let i = 0; i < e.hp; i++) {
+        ctx.fillStyle = '#d05a5a';
+        ctx.fillRect(e.x - (12 - i * 9) * S, barY, 6 * S, 4 * S);
+      }
     }
     if (singing) {
       ctx.fillStyle = '#e8e3d6';
       ctx.font = `${12 * S}px monospace`;
       ctx.textAlign = 'center';
-      ctx.fillText('♪♪', e.x, e.y - 40 * S);
+      ctx.fillText('♪♪', e.x, barY - 8 * S);
     }
   });
 
@@ -232,8 +223,6 @@ export const draw = (ctx, world) => {
   });
 
   ctx.restore();
-
-  if (level.darkZones && level.darkZones.length) drawDarkness(ctx, world, camX, camY);
 
   for (let i = 0; i < 3; i++) {
     ctx.fillStyle = i < p.hp ? '#d05a5a' : '#2a2440';

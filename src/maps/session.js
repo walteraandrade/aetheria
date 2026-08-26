@@ -27,7 +27,7 @@ const restore = (world, memory) => {
   });
 };
 
-export const createSession = ({ urlFor, texts = {}, setHint, onEnd, onEnterMap }) => {
+export const createSession = ({ urlFor, textsFor, setHint, onEnd, onEnterMap }) => {
   const docs = new Map();
   const memories = new Map();
   const state = { world: null, name: null, hp: 3 };
@@ -57,7 +57,7 @@ export const createSession = ({ urlFor, texts = {}, setHint, onEnd, onEnterMap }
     if (state.world) state.world.game.running = false;
     const { doc, baseUrl } = await loadDoc(name);
     remember();
-    const { level, parsed } = fromAseprite(doc, { ...(texts[name] ?? {}), spawnAt, baseUrl });
+    const { level, parsed } = fromAseprite(doc, { ...(textsFor?.(name) ?? {}), spawnAt, baseUrl });
 
     const world = createGame({
       level,

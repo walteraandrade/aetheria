@@ -4,11 +4,18 @@
 
 - Source: https://pixelfrog-assets.itch.io/tiny-swords
 - Files: `public/assets/tiny-swords/**`
+  - `blue-warrior/`, `red-warrior/` — Knight and Goblin troop sheets, used for
+    the player, the grunt and the boss.
+  - `terrain/` — floor and wall tilemaps, sliced by `tools/slice-tiles.lua`
+    into the per-map tilesets.
+  - `ui/` — `panel.png` (Banners/Carved_9Slides), `ribbon.png`
+    (Ribbons/Ribbon_Yellow_3Slides), `button-blue*.png` / `button-red*.png`
+    (Buttons/Button_{Blue,Red}_3Slides), used for the start and end screens.
+  - `deco/` — a subset of `Deco/` props (mushrooms, rocks, bushes, bones,
+    totems), scattered as non-solid scenery.
 - License (as stated on the itch.io page): free for personal and commercial
   projects, modification allowed, credit optional. Redistribution, resale, or
   repackaging of the asset pack itself is not permitted.
 - The files in this repository are a small renamed subset of the pack,
   included solely as part of this game. To obtain the full pack, download it
   from the source above.
-- `props/bell-tower.png` is a cropped detail of the pack's `Monastery.png`
-  (modification allowed by the license).

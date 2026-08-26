@@ -3,14 +3,46 @@
 > **Pivot (2026-08-23):** levels are dead; Aetheria is one contiguous world
 > (Zelda-1 style). §4's curriculum survives as *regions and gates* in that
 > world, not as a level sequence. Current skeleton: bell temple (west), open
-> field with a roaming singer (center), dark grove biome (east) behind a gate
-> that sings M3 — whose only matching bell sits inside the temple sanctum.
+> field with a roaming singer (center), boss room (east) behind a gate that
+> sings M3 — whose only matching bell sits inside the temple sanctum.
 > Progression = ear vocabulary: a door is passable when you have *found and
 > heard* the bell that answers it, wherever it stands. Answering works at any
 > distance (strike the bell after hearing the door), so held interval memory
 > is the traversal skill. The Echo Maze probe mechanic was cut: it was an
 > oracle (ask → answer), which breaks the game's grammar — the world sings on
 > its own and the player acts; it never answers queries.
+
+> **Cut for v1.0 (2026-08-25):** **ripple-reveal darkness (mechanic #6) is out.**
+> The dark grove that used it is gone; the east biome behind the M3 gate is now
+> a lit **boss room**. The boss is the enemy FSM with 8 HP and three attacks,
+> each announced by a different sung interval and answered spatially:
+> p5 → charge (leave the line), m3 → expanding blast (get far),
+> tritone → closing ring (press in against the singer). Killing it wins the run.
+> Both area attacks land **when their ring reaches the player and only inside
+> that ring** — an off-screen hit the player cannot see is a bug, not a
+> difficulty knob.
+> Footstep and shout ripples went out with the darkness — they only existed to
+> light it. L3 (Echo Maze) and L5 (Tritone Tower) below are historical design
+> notes, not the shipped v1.0.
+
+> **Merged onto the Aseprite pipeline (2026-08-26):** the boss room, the
+> strings module and the props were first built on the pre-pipeline single-map
+> engine and had to be ported onto `main`, which by then loaded maps from
+> Aseprite-exported JSON and had moved to a 64px tile. What changed in the
+> port:
+> - The boss is its own entity kind end to end — a marker in
+>   `tools/strings-to-aseprite.lua`, a `boss` entity in the exported JSON, and
+>   a `KINDS.boss` entry in `src/world.js`.
+> - Every new distance is written against a 32px tile and scaled by `SCALE`
+>   at use, like the rest of the engine: `RING_RADIUS = 95 * S`,
+>   `SWEEP_RADIUS = 230 * S`, `SWEEP_SAFE = 62 * S`.
+> - Ground is painted by the tileset layers from the pipeline, not by the
+>   `terrain-flat.png` sheet the single-map version used. `src/terrain.js` did
+>   not come across.
+> - `darkZones` is gone from the map format too, not just from the renderer.
+> - Props avoid bells, doors and spawns by their parsed positions, because an
+>   exported `level.map` is only `#` and `.` — the old character-based check
+>   would have silently stopped working.
 
 Research + codebase inventory synthesis. Goal: design new levels and mechanics
 using tools we already have (or can build cheaply), keeping the core rule:
@@ -54,8 +86,10 @@ using tools we already have (or can build cheaply), keeping the core rule:
 
 ### Gaps (build order matters)
 
-1. **No level abstraction** — `MAP` is a single hardcoded const in
-   `src/world.js`; door/enemy/crystal are singular objects. Biggest blocker.
+1. ~~**No level abstraction**~~ — closed. Maps are authored in Aseprite and
+   loaded as JSON (`src/maps/`), several maps link through portals, and
+   `src/maps/session.js` carries health, open doors and each door's interval
+   across them.
 2. **No stereo panning** — trivial to add (`StereoPannerNode`, pan by
    `dx / half-screen`), unlocks the whole "direction as information" axis.
 3. No master gain bus, no scheduler, no camera (map must fit 640×352 for now).
@@ -74,8 +108,10 @@ using tools we already have (or can build cheaply), keeping the core rule:
    in order. Uses existing `bells` array + a small sequence check.
 5. **Keynote drone per room** — a quiet looping root note. Consonance against
    the drone = safe, dissonance = danger. One oscillator + master gain.
-6. **Ripple-reveal darkness** — a dark room where geometry is drawn only
-   inside active ripples (system already exists visually). Sound as sight.
+6. ~~**Ripple-reveal darkness**~~ — **cut from v1.0.** A dark room where
+   geometry is drawn only inside active ripples. Sound as sight, but it made
+   the east biome a navigation puzzle instead of a combat space, and it
+   competed with the interval reading for the player's attention.
 7. **Music layers as progress feedback** — each solved door / correct dodge
    unmutes a layer. Needs a master bus + simple loop scheduler.
 8. **Decoy intervals (late game)** — enemy sings a near-interval fake
@@ -111,3 +147,49 @@ Before L2: extract `MAP` into level definitions (array of `{map, bellKeys,
 enemies, doors}`), make `parseMap`/`createGame` take a level def, and
 generalize `door`/`enemy` singulars into arrays. Small refactor, unblocks
 everything above.
+
+## 6. v2 — parked, not shipped
+
+Ideas that came up during v1.0 and were deliberately left out. None of them
+are in the code.
+
+- **Ripple-reveal darkness**, revisited: as a short *corridor* between regions
+  rather than a whole biome, so it never competes with combat reading.
+- **Keynote drone per room** (#5) and **music layers as progress** (#7): both
+  need a master gain bus and a scheduler, which v1.0 does not have.
+- **Decoy near-intervals** (#8) for a boss phase 2 — p4 pretending to be p5.
+  Only worth it once the player is fluent; v1.0's boss has no phases.
+- **Bell chains** (#4): a door sings a two-interval melody, bells struck in
+  order. Wants a sequence check on the existing `bells` array.
+- **A second enemy kind active at once** (L4, "The Choir"): tracking *whose*
+  voice is whose, by timbre and pan.
+- **Healing or checkpoints.** v1.0 gives 3 HP, no recovery, and contact damage
+  drains 1 HP per second — reaching the boss with full health is the hard part,
+  not the boss.
+- **Camera or map fit for the gate corridor.** The M3 gate is a one-tile gap in
+  a two-tile-thick wall; lining up with it is fiddlier than it should be.
+
+## 7. Next session — found while playing v1.0
+
+Ordered by how much they block a first-time player. Found on 2026-08-25; none
+of them are code defects. The run *is* completable start to finish — Walter
+played it through and killed the boss the same day. The notes below come from
+a session that never got past the roaming enemy, so read them as friction a
+player can absorb, not as walls.
+
+1. **Contact damage is the real killer.** Standing next to an enemy costs 1 HP
+   per second (`patrol`/`recover` states), the sword reaches ~50px, and there
+   is no healing. Any hesitation inside sword range is a death. Nine deaths in
+   one session came from this, not from misreading an interval.
+2. **The M3 gate corridor is a one-tile gap** in a two-tile-thick wall. The
+   player hitbox is 18px in a 32px opening, so a run down the field arrives
+   misaligned and bumps the wall with no feedback about why.
+3. **The bell↔gate round trip is long.** Hearing the east gate and answering it
+   means crossing the whole field twice, past the roaming enemy, on 3 HP.
+4. **Enemies respawn on retry but doors stay open.** Correct as designed, but it
+   means the grunt must be re-cleared on every attempt at the boss.
+
+Fixed on 2026-08-25 after the first play report: the boss's tritone sweep had
+no outer bound, so it damaged the player at any distance while its ring was
+only ever drawn out to 150px — you were hit by something you could not see.
+Both blasts now resolve on impact, inside their drawn radius.

@@ -32,13 +32,6 @@ const terrainRows = (doc, layers) =>
     ).join(''),
   );
 
-const toDarkZone = ({ x, y, w, h }) => ({
-  x0: Math.floor(x / TILE),
-  y0: Math.floor(y / TILE),
-  x1: Math.floor((x + w) / TILE) - 1,
-  y1: Math.floor((y + h) / TILE) - 1,
-});
-
 const parseEntities = (entities) => {
   const ordered = [...entities].sort(byReadingOrder);
   const of = (kind) => ordered.filter((e) => e.kind === kind);
@@ -72,10 +65,14 @@ const parseEntities = (entities) => {
       pool: splitList(props.pool),
       interval: null, root: null,
     })),
-    enemySpawns: of('enemy').map(({ x, y }) => ({ x: x + HALF, y: y + HALF })),
+    // Grunt and boss are separate markers in Aseprite, so each is its own
+    // entity kind here; world.js reads the kind to pick its stats and attacks.
+    enemySpawns: [
+      ...of('enemy').map(({ x, y }) => ({ x: x + HALF, y: y + HALF, kind: 'grunt' })),
+      ...of('boss').map(({ x, y }) => ({ x: x + HALF, y: y + HALF, kind: 'boss' })),
+    ],
     playerSpawn: of('player').map(({ x, y }) => ({ x: x + HALF, y: y + HALF }))[0] ?? null,
     crystal: of('crystal').map(({ x, y }) => ({ x: x + HALF, y: y + HALF }))[0] ?? null,
-    darkZones: of('dark').map(toDarkZone),
   };
 };
 
@@ -94,7 +91,7 @@ export const fromAseprite = (doc, meta = {}) => {
   }));
   if (!layers.length) throw new Error(`fromAseprite: ${doc.name} has no terrain layers`);
 
-  const { bells, doors, enemySpawns, playerSpawn, crystal, darkZones, portals, spawnPoints } =
+  const { bells, doors, enemySpawns, playerSpawn, crystal, portals, spawnPoints } =
     parseEntities(doc.entities);
 
   // Where the player lands: an explicit arrival point wins over the map's own
@@ -122,7 +119,6 @@ export const fromAseprite = (doc, meta = {}) => {
     winText: meta.winText ?? '',
     bellKeys: [...new Set(bells.map((b) => b.key))],
     doorPools: Object.fromEntries(doors.map((d, i) => [String(i), d.pool])),
-    darkZones,
     map,
     cols: doc.cols,
     rows: doc.rows,

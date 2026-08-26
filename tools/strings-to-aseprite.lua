@@ -122,6 +122,7 @@ end
 marker("player", "player", nil, 224, 180, 92)
 marker("crystal", "crystal", nil, 124, 196, 138)
 marker("enemy", "enemy", nil, 240, 144, 143)
+marker("boss", "boss", nil, 176, 48, 64)
 for char, portal in pairs(world.portals or {}) do
   marker("portal_" .. char, "portal",
     { to = portal.to, spawn = portal.spawn, id = portal.id }, 92, 127, 208)
@@ -154,6 +155,7 @@ for r = 1, rows do
     elseif ch == "P" then m = markers["player"]
     elseif ch == "C" then m = markers["crystal"]
     elseif ch == "E" then m = markers["enemy"]
+    elseif ch == "B" then m = markers["boss"]
     elseif (world.portals or {})[ch] then m = markers["portal_" .. ch]
     elseif (world.spawns or {})[ch] then m = markers["spawn_" .. ch]
     end

@@ -22,7 +22,6 @@ const checks = [
   ['crystal', expected.crystal, parsed.crystal],
   ['enemySpawns', norm(expected.enemySpawns), norm(parsed.enemySpawns)],
   ['playerSpawn', expected.playerSpawn, parsed.playerSpawn],
-  ['darkZones', WORLD.darkZones, level.darkZones],
   ['map dimensions', [WORLD.map.length, WORLD.map[0].length], [level.map.length, level.map[0].length]],
 ];
 
